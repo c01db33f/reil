@@ -250,9 +250,11 @@ class ImmediateOperand(object):
 
     __slots__ = ('value', 'size')
 
+
     def __init__(self, value, size):
         self.value = value
         self.size = size
+
 
     def __str__(self):
         return '({}, {})'.format(self.value, self.size)
@@ -272,9 +274,11 @@ class OffsetOperand(object):
 
     __slots__ = ('offset', 'size')
 
+
     def __init__(self, offset):
         self.offset = offset
         self.size = 8
+
 
     def __str__(self):
         return '(.{:02x}, {})'.format(self.offset, self.size)
@@ -294,9 +298,11 @@ class RegisterOperand(object):
 
     __slots__ = ('name', 'size')
 
+
     def __init__(self, name, size):
         self.name = name
         self.size = size
+
 
     def __str__(self):
         return '({}, {})'.format(self.name, self.size)
@@ -315,6 +321,7 @@ class TemporaryOperand(RegisterOperand):
     """
 
     __slots__ = ('name', 'size')
+
 
     def __init__(self, index, size):
         self.name = 't{:02}'.format(index)
@@ -339,11 +346,13 @@ class Instruction(object):
 
     __slots__ = ('opcode', 'input0', 'input1', 'output')
 
+
     def __init__(self, opcode, input0=None, input1=None, output=None):
         self.opcode = opcode
         self.input0 = input0
         self.input1 = input1
         self.output = output
+
 
     def __str__(self):
         output = _opcode_to_string(self.opcode)
