@@ -27,7 +27,7 @@ the streaming-simd extensions
 import capstone
 
 import reil.native as native
-import reil.reil as reil
+import reil.definitions as reil
 from reil.shorthand import *
 
 import reil.x86.arithmetic as arithmetic
@@ -384,6 +384,7 @@ def translate(code_bytes, base_address, x86_64=False):
         ctx = _x86_ctx
 
     for i in ctx.disassembler.disasm(code_bytes, base_address):
+
         if done:
             raise StopIteration()
 

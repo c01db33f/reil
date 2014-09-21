@@ -20,8 +20,8 @@ This module contains all the silly little utility functions that didn't
 belong anywhere else.
 """
 
-import pyreil.reil as reil
-from pyreil.shorthand import *
+import reil.definitions as reil
+from reil.shorthand import *
 
 def carry_bit(size):
     """The mask required for the carry bit on a computation with a

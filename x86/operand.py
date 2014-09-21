@@ -280,6 +280,24 @@ def get(ctx, i, index, size=0):
             'Unsupported operand type!')
 
 
+def get_size(ctx, i, index, size=0):
+
+    opnd = i.operands[index]
+
+    if opnd.type == capstone.x86.X86_OP_REG:
+        return _get_register(ctx, i, opnd).size
+
+    elif opnd.type == capstone.x86.X86_OP_IMM:
+        return _get_immediate(ctx, i, opnd, size).size
+
+    elif opnd.type == capstone.x86.X86_OP_MEM:
+        return _memory_size(ctx, i, opnd)
+
+    else:
+        raise TranslationError(
+            'Unsupported operand type!')
+
+
 def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
 
     low_bytes = {

@@ -362,4 +362,4 @@ class Instruction(object):
             output += ', {}'.format(self.input1)
         if self.output is not None:
             output += ', {}'.format(self.output)
-        return output__author__ = 'user'
+        return output

@@ -193,7 +193,7 @@ def x86_leave(ctx, i):
 
 
 def x86_mov(ctx, i):
-    a = operand.get(ctx, i, 0)
+    size = operand.get_size(ctx, i, 0)
     value = None
 
     clear = True
@@ -201,7 +201,7 @@ def x86_mov(ctx, i):
         # source is the accumulator
         value = ctx.accumulator
     else:
-        value = operand.get(ctx, i, 1, size=a.size)
+        value = operand.get(ctx, i, 1, size=size)
 
         if (i.operands[0].type == capstone.x86.X86_OP_REG and
             i.operands[1].type == capstone.x86.X86_OP_REG):
