@@ -371,17 +371,17 @@ class X86_64TranslationContext(TranslationContext):
         self.disassembler.detail = True
 
 
-_x86_ctx = X86TranslationContext()
-_x86_64_ctx = X86_64TranslationContext()
+#_x86_ctx = X86TranslationContext()
+#_x86_64_ctx = X86_64TranslationContext()
 
 
 def translate(code_bytes, base_address, x86_64=False):
     done = False
 
     if x86_64:
-        ctx = _x86_64_ctx
+        ctx = X86_64TranslationContext()
     else:
-        ctx = _x86_ctx
+        ctx = X86TranslationContext()
 
     for i in ctx.disassembler.disasm(code_bytes, base_address):
 
