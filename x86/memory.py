@@ -57,39 +57,28 @@ def conditional_mov(ctx, i, condition):
 
 
 def rep_prologue(ctx, i):
-    cond = ctx.tmp(8)
+    tmp = ctx.tmp(64)
 
-    ctx.emit(  bisz_(ctx.counter, cond))
-
-    if i.mnemonic.startswith('repne'):
-        tmp = ctx.tmp(8)
-
-        ctx.emit(  bisz_ (r('zf', 8), tmp))
-        ctx.emit(  or_   (tmp, cond, cond))
-
-    elif i.mnemonic.startswith('repe'):
-        ctx.emit(  or_   (r('zf', 8), cond, cond))
-
-    # we're done, jump to next instruction
-    ctx.emit(  jcc_  (cond, imm(i.address + i.size, ctx.word_size)))
-
-    # otherwise decrement counter and execute instruction
-    ctx.emit(  sub_  (ctx.counter, imm(1, ctx.word_size), ctx.counter))
+    # counter == 0 is only condition in which we terminate without executing
+    ctx.emit(  bisz_ (ctx.counter, tmp))
+    ctx.emit(  jcc_  (tmp, imm(i.address + i.size, ctx.word_size)))
 
 
 def rep_epilogue(ctx, i):
     cond = ctx.tmp(8)
 
+    ctx.emit(  sub_  (ctx.counter, imm(1, ctx.word_size), ctx.counter))
     ctx.emit(  bisnz_(ctx.counter, cond))
 
     if i.mnemonic.startswith('repne'):
-        ctx.emit(  or_   (r('zf', 8), cond, cond))
-
-    elif i.mnemonic.startswith('repe'):
+        # repeat if counter > 0 and zf not set
         tmp = ctx.tmp(8)
+        ctx.emit(  bisz_ (r('zf', 8), tmp))
+        ctx.emit(  and_  (tmp, cond, cond))
 
-        ctx.emit(  bisnz_(r('zf', 8), tmp))
-        ctx.emit(  or_   (tmp, cond, cond))
+    elif i.mnemonic.startswith('repe') or 'cmps' in i.mnemonic:
+        # repeat if counter > 0 and zf set
+        ctx.emit(  and_  (r('zf', 8), cond, cond))
 
     # we're not done, jump back to start of instruction
     ctx.emit(  jcc_  (cond, imm(i.address, ctx.word_size)))
