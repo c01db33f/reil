@@ -206,6 +206,10 @@ def x86_div(ctx, i):
         ctx.emit(  str_  (remainder, result))
         ctx.emit(  lshl_ (result, imm(divisor.size, 8), result))
         ctx.emit(  or_   (quotient, result, result))
+    else:
+        # quotient goes in *ax, remainder goes in *dx
+        ctx.emit(  str_  (quotient, ctx.accumulator))
+        ctx.emit(  str_  (remainder, ctx.data))
 
     ctx.emit(  undef_(r('cf', 8)))
     ctx.emit(  undef_(r('of', 8)))
@@ -226,6 +230,34 @@ def x86_dec(ctx, i):
     _sub_set_flags(ctx, a, b, result, cf=False)
 
     operand.set(ctx, i, 0, result)
+
+
+def x86_idiv(ctx, i):
+    a = operand.get(ctx, i, 0)
+    dividend = ctx.tmp(a.size * 2)
+
+    if a.size == 8:
+        # dividend is ax
+        ctx.emit(  str_  (ctx.accumulator, dividend))
+
+    else:
+        # dividend is dx:ax, edx:eax, rdx:rax
+        dividend_lo = ctx.tmp(a.size)
+        dividend_hi = ctx.tmp(a.size)
+
+        ctx.emit(  str_  (ctx.accumulator, dividend_lo))
+        ctx.emit(  str_  (ctx.data, dividend_hi))
+        ctx.emit(  lshl_ (dividend_hi, imm(a.size, 8), dividend))
+        ctx.emit(  or_   (dividend, dividend_lo, dividend))
+
+    quotient = ctx.tmp(a.size)
+    remainder = ctx.tmp(a.size)
+
+    ctx.emit(  div_  (dividend, a, quotient))
+    ctx.emit(  mod_  (dividend, a, remainder))
+
+
+
 
 def x86_imul(ctx, i):
     if len(i.operands) == 1:
@@ -324,7 +356,7 @@ def x86_sbb(ctx, i):
 
     _sub_set_flags(ctx, a, b, result)
 
-    operand.set(ctx, i, 0, result)
+    operand.set(ctx, i, 0, result, clear=True)
 
 
 def x86_sub(ctx, i):

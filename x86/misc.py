@@ -207,6 +207,10 @@ def x86_cdq(ctx, i):
     _convert(ctx, 32)
 
 
+def x86_cqo(ctx, i):
+    _convert(ctx, 64)
+
+
 def x86_cbw(ctx, i):
     _convert_2(ctx, 8)
 
@@ -224,16 +228,25 @@ def x86_cmpxchg(ctx, i):
     b = operand.get(ctx, i, 0)
     c = operand.get(ctx, i, 1)
 
+    if b.size != a.size:
+        prev_a = a
+        a = ctx.tmp(b.size)
+        ctx.emit(  str_  (prev_a, a))
+
     tmp0 = ctx.tmp(8)
+
     ctx.emit(  equ_  (a, b, tmp0))
     ctx.emit(  jcc_  (tmp0, 'equal'))
+
     ctx.emit('not-equal')
-    operand.set(ctx, i, 0, c)
+    ctx.emit(  str_  (c, ctx.accumulator))
     ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
     ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
     ctx.emit('equal')
-    operand.set(ctx, i, 0, a)
+    operand.set(ctx, i, 0, c)
     ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+
     ctx.emit('done')
     ctx.emit(  nop_())
 

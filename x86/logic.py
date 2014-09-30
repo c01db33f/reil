@@ -62,7 +62,7 @@ def _logic_set_flags(ctx, result):
 
 def x86_and(ctx, i):
     a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1, size=a.size)
+    b = operand.get(ctx, i, 1, a.size)
 
     size = min(a.size, b.size)
     result = ctx.tmp(size)
@@ -87,7 +87,7 @@ def x86_not(ctx, i):
 
 def x86_or(ctx, i):
     a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1)
+    b = operand.get(ctx, i, 1, a.size)
 
     size = min(a.size, b.size)
     result = ctx.tmp(size)
@@ -101,7 +101,7 @@ def x86_or(ctx, i):
 
 def x86_test(ctx, i):
     a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1)
+    b = operand.get(ctx, i, 1, a.size)
 
     size = min(a.size, b.size)
     result = ctx.tmp(size)
@@ -113,7 +113,7 @@ def x86_test(ctx, i):
 
 def x86_xor(ctx, i):
     a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1)
+    b = operand.get(ctx, i, 1, a.size)
 
     size = min(a.size, b.size)
     result = ctx.tmp(size)

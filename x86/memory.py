@@ -61,13 +61,13 @@ def rep_prologue(ctx, i):
 
     ctx.emit(  bisz_(ctx.counter, cond))
 
-    if i.mnemonic.startswith('repne'): # or i.mnemonic.startswith('repnz'):
+    if i.mnemonic.startswith('repne'):
         tmp = ctx.tmp(8)
 
         ctx.emit(  bisz_ (r('zf', 8), tmp))
         ctx.emit(  or_   (tmp, cond, cond))
 
-    elif i.mnemonic.startswith('repe'): # or i.mnemonic.startswith('repz'):
+    elif i.mnemonic.startswith('repe'):
         ctx.emit(  or_   (r('zf', 8), cond, cond))
 
     # we're done, jump to next instruction
@@ -82,10 +82,10 @@ def rep_epilogue(ctx, i):
 
     ctx.emit(  bisnz_(ctx.counter, cond))
 
-    if i.mnemonic.startswith('repne'): # or i.mnemonic.startswith('repnz'):
+    if i.mnemonic.startswith('repne'):
         ctx.emit(  or_   (r('zf', 8), cond, cond))
 
-    elif i.mnemonic.startswith('repe'): # or i.mnemonic.startswith('repz'):
+    elif i.mnemonic.startswith('repe'):
         tmp = ctx.tmp(8)
 
         ctx.emit(  bisnz_(r('zf', 8), tmp))
@@ -173,6 +173,66 @@ def x86_cmovp(ctx, i):
 def x86_cmovs(ctx, i):
     """mov if sign"""
     conditional_mov(ctx, i, conditional.S)
+
+
+def x86_cmps(ctx, i, size):
+
+    src = ctx.source
+    dst = ctx.destination
+
+    result = ctx.tmp(size * 2)
+
+    value1 = ctx.tmp(size)
+    address1 = ctx.tmp(src.size)
+
+    value2 = ctx.tmp(size)
+    address2 = ctx.tmp(src.size)
+
+    if i.mnemonic.startswith('rep'):
+        rep_prologue(ctx, i)
+
+    # read the values
+    ctx.emit(  str_  (src, address1))
+    ctx.emit(  ldm_  (address1, value1))
+
+    ctx.emit(  str_  (dst, address2))
+    ctx.emit(  ldm_  (address2, value2))
+
+    # do the comparison and set flags
+    ctx.emit(  sub_  (value1, value2, result))
+    arithmetic._sub_set_flags(ctx, value1, value2, result)
+
+    # do the increment/decrement
+    ctx.emit(  jcc_  (r('df', 8), 'decrement'))
+    ctx.emit('increment')
+    ctx.emit(  add_  (address1, imm(size // 8, ctx.word_size), address1))
+    ctx.emit(  add_  (address2, imm(size // 8, ctx.word_size), address2))
+    ctx.emit(  jcc_  (imm(1, 8), 'set'))
+    ctx.emit('decrement')
+    ctx.emit(  sub_  (address1, imm(size // 8, ctx.word_size), address1))
+    ctx.emit(  sub_  (address2, imm(size // 8, ctx.word_size), address2))
+    ctx.emit('set')
+    ctx.emit(  str_  (address1, ctx.source))
+    ctx.emit(  str_  (address2, ctx.destination))
+
+    if i.mnemonic.startswith('rep'):
+        rep_epilogue(ctx, i)
+
+
+def x86_cmpsb(ctx, i):
+    x86_cmps(ctx, i, 8)
+
+
+def x86_cmpsw(ctx, i):
+    x86_cmps(ctx, i, 16)
+
+
+def x86_cmpsd(ctx, i):
+    x86_cmps(ctx, i, 32)
+
+
+def x86_cmpsq(ctx, i):
+    x86_cmps(ctx, i, 64)
 
 
 def x86_lea(ctx, i):

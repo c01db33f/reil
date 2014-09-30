@@ -364,6 +364,15 @@ def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
         capstone.x86.X86_REG_R15D:r('r15', 64),
     }
 
+    def truncate_value(value, size):
+
+        if value.size > size:
+            prev_value = value
+            value = ctx.tmp(size)
+            ctx.emit(  str_  (prev_value, value))
+
+        return value
+
     # full native registers
     if opnd.reg in ctx.registers:
         reg = ctx.registers[opnd.reg]
@@ -373,10 +382,12 @@ def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
     elif opnd.reg in low_bytes:
         reg = low_bytes[opnd.reg]
         set_mask = imm(~mask(8), reg.size)
+        value = truncate_value(value, 8)
 
     # 8-bit high parts
     elif opnd.reg in high_bytes:
         reg = high_bytes[opnd.reg]
+        value = truncate_value(value, 8)
 
         prev_value = value
         value = ctx.tmp(reg.size)
@@ -392,20 +403,19 @@ def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
     elif opnd.reg in low_words:
         reg = low_words[opnd.reg]
         set_mask = imm(~mask(16), reg.size)
+        value = truncate_value(value, 16)
 
     # 32-bit low parts
     elif opnd.reg in low_dwords:
         reg = low_dwords[opnd.reg]
         set_mask = imm(~mask(32), reg.size)
+        value = truncate_value(value, 32)
 
     else:
         raise TranslationError('Unsupported register!')
 
     if value.size > reg.size:
-        prev_value = value
-        value = ctx.tmp(reg.size)
-
-        ctx.emit(  str_  (prev_value, value))
+        value = truncate_value(value, reg.size)
 
     elif value.size < reg.size:
         prev_value = value

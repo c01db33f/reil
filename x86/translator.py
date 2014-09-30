@@ -48,12 +48,14 @@ opcode_handlers = {
     capstone.x86.X86_INS_BSF:       bitwise.x86_bsf,
     capstone.x86.X86_INS_BSR:       bitwise.x86_bsr,
     #capstone.x86.X86_INS_BSWAPQ:    misc.x86_bswapq,
+
     capstone.x86.X86_INS_CBW:       misc.x86_cbw,
     capstone.x86.X86_INS_CLD:       misc.x86_cld,
     capstone.x86.X86_INS_CWD:       misc.x86_cwd,
     capstone.x86.X86_INS_CWDE:      misc.x86_cwde,
     capstone.x86.X86_INS_CDQ:       misc.x86_cdq,
     capstone.x86.X86_INS_CDQE:      misc.x86_cdqe,
+    capstone.x86.X86_INS_CQO:       misc.x86_cqo,
 
     capstone.x86.X86_INS_CMOVA:     memory.x86_cmova,
     capstone.x86.X86_INS_CMOVAE:    memory.x86_cmovae,
@@ -72,11 +74,16 @@ opcode_handlers = {
     capstone.x86.X86_INS_CMOVP:     memory.x86_cmovp,
     capstone.x86.X86_INS_CMOVS:     memory.x86_cmovs,
 
+    capstone.x86.X86_INS_CMPSB:     memory.x86_cmpsb,
+    capstone.x86.X86_INS_CMPSW:     memory.x86_cmpsw,
+    capstone.x86.X86_INS_CMPSD:     memory.x86_cmpsd,
+    capstone.x86.X86_INS_CMPSQ:     memory.x86_cmpsq,
     capstone.x86.X86_INS_CMPXCHG:   misc.x86_cmpxchg,
     capstone.x86.X86_INS_CALL:      control_flow.x86_call,
     capstone.x86.X86_INS_CMP:       arithmetic.x86_cmp,
     capstone.x86.X86_INS_DIV:       arithmetic.x86_div,
     capstone.x86.X86_INS_DEC:       arithmetic.x86_dec,
+    capstone.x86.X86_INS_IDIV:      arithmetic.x86_idiv,
     capstone.x86.X86_INS_IMUL:      arithmetic.x86_imul,
     capstone.x86.X86_INS_INC:       arithmetic.x86_inc,
     capstone.x86.X86_INS_INT:       misc.x86_int,
@@ -242,6 +249,7 @@ def print_instruction(i):
 def unknown_opcode(ctx, i):
     print_instruction(i)
     print(i.id)
+    raise NotImplementedError()
 
     ctx.emit(  unkn_())
 

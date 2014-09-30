@@ -284,8 +284,12 @@ def x86_shl(ctx, i):
     ctx.emit(  and_  (result, imm(sign_bit(size), size), tmp5))
     ctx.emit(  bisz_ (tmp5, tmp6))
     ctx.emit(  equ_  (r('cf', 8), tmp6, r('of', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'overflow_flag_done'))
 
     ctx.emit('no_overflow_flag')
+    ctx.emit(  str_  (imm(0, 8), r('of', 8)))
+
+    ctx.emit('overflow_flag_done')
 
     _shift_set_flags(ctx, result)
 
@@ -311,7 +315,9 @@ def x86_shr(ctx, i):
     tmp2 = ctx.tmp(size * 2)
     tmp3 = ctx.tmp(size * 2)
     tmp4 = ctx.tmp(size * 2)
-    tmp5 = ctx.tmp(size)
+    tmp5 = ctx.tmp(8)
+    tmp6 = ctx.tmp(size)
+    tmp7 = ctx.tmp(size)
     result = ctx.tmp(size)
 
     # the shift amount is truncated at word_size - 1
@@ -330,11 +336,27 @@ def x86_shr(ctx, i):
     ctx.emit(  lshr_ (tmp3, imm(max_shift+1, size * 2), tmp4))
     ctx.emit(  str_  (tmp4, result))
 
-    # TODO: overflow flag
+    # according to intel manual, of is set only for one-bit shifts.
+    # in practice, appears to be set regardless, so I am doing so also
+    # since in any case, for multi-bit-shifts it is 'undefined'...
+
+    #ctx.emit(  equ_  (tmp0, imm(1, size), tmp5))
+    #ctx.emit(  bisz_ (tmp5, tmp5))
+    #ctx.emit(  jcc_  (tmp5, 'no_overflow_flag'))
+
+    # compute overflow flag
+    ctx.emit(  and_  (a, imm(sign_bit(size), size), tmp6))
+    ctx.emit(  bisnz_(tmp6, r('of', 8)))
+    #ctx.emit(  jcc_  (imm(1, 8), 'overflow_flag_done'))
+
+    #ctx.emit('no_overflow_flag')
+    #ctx.emit(  str_  (imm(0, 8), r('of', 8)))
+
+    #ctx.emit('overflow_flag_done')
 
     # compute carry flag (last bit to be shifted out)
-    ctx.emit(  and_  (tmp3, imm(sign_bit(size), size), tmp5))
-    ctx.emit(  bisnz_(tmp5, r('cf', 8)))
+    ctx.emit(  and_  (tmp3, imm(sign_bit(size), size), tmp7))
+    ctx.emit(  bisnz_(tmp7, r('cf', 8)))
 
     _shift_set_flags(ctx, result)
 
