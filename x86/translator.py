@@ -47,6 +47,7 @@ opcode_handlers = {
     capstone.x86.X86_INS_BSWAP:     misc.x86_bswap,
     capstone.x86.X86_INS_BSF:       bitwise.x86_bsf,
     capstone.x86.X86_INS_BSR:       bitwise.x86_bsr,
+    capstone.x86.X86_INS_BT:        bitwise.x86_bt,
     #capstone.x86.X86_INS_BSWAPQ:    misc.x86_bswapq,
 
     capstone.x86.X86_INS_CBW:       misc.x86_cbw,

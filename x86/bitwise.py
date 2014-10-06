@@ -144,6 +144,17 @@ def x86_bsr(ctx, i):
     ctx.emit(  undef_(r('af', 8)))
 
 
+def x86_bt(ctx, i):
+    a = operand.get(ctx, i, 0)
+    b = operand.get(ctx, i, 1)
+    bitmask = ctx.tmp(a.size)
+    bit = ctx.tmp(a.size)
+
+    ctx.emit(  lshl_ (imm(1, a.size), b, bitmask))
+    ctx.emit(  and_  (a, bitmask, bit))
+    ctx.emit(  bisnz_(bit, r('cf', 8)))
+
+
 def x86_ror(ctx, i):
     a = operand.get(ctx, i, 0)
     b = operand.get(ctx, i, 1)
