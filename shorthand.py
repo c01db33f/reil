@@ -287,6 +287,16 @@ def ashr_(input0, input1, output):
     return reil.Instruction(reil.ASHR, input0, input1, output)
 
 
+def sdiv_(input0, input1, output):
+    """Performs a signed division on the two input operands. The
+    first input operand is the dividend, the second input operand is
+    the divisor. The two input operands can be either registers or
+    literals while the output operand must be a register.
+    """
+
+    return reil.Instruction(reil.SDIV, input0, input1, output)
+
+
 def sex_(input0, output):
     """Extended REIL opcode.
 

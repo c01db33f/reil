@@ -261,8 +261,20 @@ def x86_idiv(ctx, i):
     # so far suggest that it is the same, but that is just from program traces
     # not exhaustive proof.
 
-    ctx.emit(  div_  (dividend, divisor, quotient))
+    ctx.emit(  sdiv_ (dividend, divisor, quotient))
     ctx.emit(  mod_  (dividend, divisor, remainder))
+
+    # compute sign of remainder
+    tmp = ctx.tmp(dividend.size)
+    ctx.emit(  and_  (dividend, imm(sign_bit(dividend.size), dividend.size), tmp))
+    ctx.emit(  bisz_ (tmp, tmp))
+    ctx.emit(  jcc_  (tmp, 'positive'))
+
+    # remainder is negative
+
+
+    # remainder is positive, nothing to do
+    ctx.emit('positive')
 
     if divisor.size == 8:
         # result goes in ax

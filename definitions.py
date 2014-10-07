@@ -176,7 +176,14 @@ operands can be either registers or literals while the output operand
 must be a register.
 """
 
-SEX   = 22
+SDIV  = 22
+"""Performs a signed division on the two input operands. The
+first input operand is the dividend, the second input operand is
+the divisor. The two input operands can be either registers or
+literals while the output operand must be a register.
+"""
+
+SEX   = 23
 """Extended REIL opcode.
 
 Performs sign extension on a value. This operand behaves identically
@@ -185,7 +192,7 @@ the input operand, in which case the input is sign-extended instead
 of zero-extended.
 """
 
-SYS   = 23
+SYS   = 24
 """Extended REIL opcode.
 
 This opcode is used to indicate a transition between user and
@@ -218,6 +225,7 @@ _opcode_string_map = [
     'lshl',
     'lshr',
     'ashr',
+    'sdiv',
     'sex',
     'sys',
 ]

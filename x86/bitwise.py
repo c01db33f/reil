@@ -223,7 +223,8 @@ def x86_sar(ctx, i):
     tmp1 = ctx.tmp(size * 2)
     tmp2 = ctx.tmp(size * 2)
     tmp3 = ctx.tmp(size * 2)
-    tmp4 = ctx.tmp(size * 2)
+    tmp4 = ctx.tmp(size)
+    tmp5 = ctx.tmp(size * 2)
     result = ctx.tmp(a.size)
 
     # the shift amount is truncated at word_size - 1
@@ -238,11 +239,18 @@ def x86_sar(ctx, i):
     # right shift by the correct amount
     ctx.emit(  ashr_ (tmp2, tmp0, tmp3))
 
-    # shift out then truncate to get second half of result
-    ctx.emit(  ashr_ (tmp3, imm(max_shift+1, size * 2), tmp4))
-    ctx.emit(  str_  (tmp4, result))
+    # save off the first bit that is going to be lost
+    ctx.emit(  and_  (tmp3, imm(sign_bit(size), size * 2), tmp4))
 
-    # TODO: compute carry and overflow flag
+    # shift out then truncate to get second half of result
+    ctx.emit(  ashr_ (tmp3, imm(max_shift+1, size * 2), tmp5))
+    ctx.emit(  str_  (tmp5, result))
+
+    # set sign flag
+    ctx.emit(  bisnz_(tmp4, r('cf', 8)))
+
+    # overflow flag is always 0
+    ctx.emit(  str_  (imm(0, 8), r('of', 8)))
 
     _shift_set_flags(ctx, result)
 
