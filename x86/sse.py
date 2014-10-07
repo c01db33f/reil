@@ -132,7 +132,7 @@ def x86_palignr(ctx, i):
 
     result = ctx.tmp(tmp0.size)
 
-    ctx.emit(  lshl_ (tmp0, imm(shift, 16), result))
+    ctx.emit(  lshr_ (tmp0, imm(shift, 32), result))
 
     operand.set(ctx, i, 0, result)
 

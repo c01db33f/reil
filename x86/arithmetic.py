@@ -195,9 +195,10 @@ def x86_div(ctx, i):
         ctx.emit(  lshl_ (dividend, imm(divisor.size, 8), dividend))
         ctx.emit(  or_  (a, dividend, dividend))
 
-
     ctx.emit(  div_  (dividend, divisor, quotient))
     ctx.emit(  mod_  (dividend, divisor, remainder))
+
+    # TODO: implement checking for overflow
 
     if divisor.size == 8:
         # result goes in ax
@@ -233,28 +234,54 @@ def x86_dec(ctx, i):
 
 
 def x86_idiv(ctx, i):
-    a = operand.get(ctx, i, 0)
-    dividend = ctx.tmp(a.size * 2)
+    divisor = operand.get(ctx, i, 0)
+    dividend = ctx.tmp(divisor.size * 2)
 
-    if a.size == 8:
+    if divisor.size == 8:
         # dividend is ax
         ctx.emit(  str_  (ctx.accumulator, dividend))
 
     else:
         # dividend is dx:ax, edx:eax, rdx:rax
-        dividend_lo = ctx.tmp(a.size)
-        dividend_hi = ctx.tmp(a.size)
+        dividend_lo = ctx.tmp(divisor.size)
+        dividend_hi = ctx.tmp(divisor.size)
 
         ctx.emit(  str_  (ctx.accumulator, dividend_lo))
         ctx.emit(  str_  (ctx.data, dividend_hi))
-        ctx.emit(  lshl_ (dividend_hi, imm(a.size, 8), dividend))
+        ctx.emit(  lshl_ (dividend_hi, imm(divisor.size, 8), dividend))
         ctx.emit(  or_   (dividend, dividend_lo, dividend))
 
-    quotient = ctx.tmp(a.size)
-    remainder = ctx.tmp(a.size)
+    quotient = ctx.tmp(divisor.size)
+    remainder = ctx.tmp(divisor.size)
 
-    ctx.emit(  div_  (dividend, a, quotient))
-    ctx.emit(  mod_  (dividend, a, remainder))
+    # TODO: implement checking for overflow
+
+    # TODO: also is a signed divide/modulus different to unsigned, or is it
+    # just a question of the error cases being different? consider... testcases
+    # so far suggest that it is the same, but that is just from program traces
+    # not exhaustive proof.
+
+    ctx.emit(  div_  (dividend, divisor, quotient))
+    ctx.emit(  mod_  (dividend, divisor, remainder))
+
+    if divisor.size == 8:
+        # result goes in ax
+
+        result = r(ctx.accumulator.name, 16)
+        ctx.emit(  str_  (remainder, result))
+        ctx.emit(  lshl_ (result, imm(divisor.size, 8), result))
+        ctx.emit(  or_   (quotient, result, result))
+    else:
+        # quotient goes in *ax, remainder goes in *dx
+        ctx.emit(  str_  (quotient, ctx.accumulator))
+        ctx.emit(  str_  (remainder, ctx.data))
+
+    ctx.emit(  undef_(r('cf', 8)))
+    ctx.emit(  undef_(r('of', 8)))
+    ctx.emit(  undef_(r('sf', 8)))
+    ctx.emit(  undef_(r('zf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
 
 
 

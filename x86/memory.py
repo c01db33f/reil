@@ -226,7 +226,7 @@ def x86_cmpsq(ctx, i):
 
 def x86_lea(ctx, i):
     address = operand.get_address(ctx, i, 1)
-    operand.set(ctx, i, 0, address)
+    operand.set(ctx, i, 0, address, clear=True)
 
 
 def x86_leave(ctx, i):
@@ -256,7 +256,11 @@ def x86_mov(ctx, i):
             i.operands[1].type == capstone.x86.X86_OP_REG):
             clear = False
 
-    operand.set(ctx, i, 0, value, clear=True, sign_extend=False)
+    # Oh x86 how I hate you
+    if i.operands[1].type == capstone.x86.X86_OP_MEM and operand.get_size(ctx, i, 1) == 8:
+        operand.set(ctx, i, 0, value)
+    else:
+        operand.set(ctx, i, 0, value, clear=True, sign_extend=False)
 
 
 def x86_movabs(ctx, i):
