@@ -75,7 +75,9 @@ def pack(ctx, parts):
 x86_movaps = memory.x86_mov
 x86_movd = memory.x86_mov
 x86_movdqa = memory.x86_mov
+x86_vmovdqa = memory.x86_mov
 x86_movdqu = memory.x86_mov
+x86_vmovdqu = memory.x86_mov
 x86_movups = memory.x86_mov
 
 

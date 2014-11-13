@@ -189,6 +189,8 @@ opcode_handlers = {
     capstone.x86.X86_INS_SYSENTER:  misc.x86_sysenter,
     capstone.x86.X86_INS_SYSCALL:   misc.x86_syscall,
     capstone.x86.X86_INS_TEST:      logic.x86_test,
+    capstone.x86.X86_INS_VMOVDQA:   sse.x86_movdqa,
+    capstone.x86.X86_INS_VMOVDQU:   sse.x86_movdqu,
     capstone.x86.X86_INS_XCHG:      misc.x86_xchg,
     capstone.x86.X86_INS_XOR:       logic.x86_xor,
 }

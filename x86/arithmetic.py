@@ -160,6 +160,13 @@ def x86_cmp(ctx, i):
     a = operand.get(ctx, i, 0)
     b = operand.get(ctx, i, 1)
 
+    # HACK: operand.get isn't handling this well for the byte -0x80 provided by capstone
+    # that's fair, because let's be honest, that's just retarded output from the disassembler
+    if b.size > a.size:
+        prev_b = b
+        b = ctx.tmp(a.size)
+        ctx.emit(  str_  (prev_b, b))
+
     b = _sign_extend(ctx, a, b)
 
     result = ctx.tmp(a.size * 2)
@@ -301,7 +308,18 @@ def x86_idiv(ctx, i):
 def x86_imul(ctx, i):
     if len(i.operands) == 1:
         # single operand form
-        ctx.emit(  unkn_())
+        a = ctx.accumulator
+        b = ctx.data
+
+        result = ctx.tmp(a.size * 2)
+
+        ctx.emit(  mul_  (a, b, result))
+
+        ctx.emit(  str_  (result, ctx.accumulator))
+        ctx.emit(  lshr_ (result, imm(a.size, 8), result))
+        ctx.emit(  str_  (result, ctx.data))
+
+        _imul_set_flags(ctx, result)
 
     elif len(i.operands) == 2:
         # double operand form

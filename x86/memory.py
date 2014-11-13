@@ -257,7 +257,7 @@ def x86_mov(ctx, i):
             clear = False
 
     # Oh x86 how I hate you
-    if i.operands[1].type == capstone.x86.X86_OP_MEM and operand.get_size(ctx, i, 1) == 8:
+    if i.operands[1].type == capstone.x86.X86_OP_MEM and operand.get_size(ctx, i, 1) != 32:
         operand.set(ctx, i, 0, value)
     else:
         operand.set(ctx, i, 0, value, clear=True, sign_extend=False)

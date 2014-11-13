@@ -230,6 +230,11 @@ def _get_register(ctx, i, opnd):
 def _get_immediate(ctx, i, opnd, size=0):
 
     if size == 0:
+        # TODO: This does not work. How to do this better?
+
+        # maybe all immediates should be the minimum possible size to
+        # represent them?
+
         bs = opnd.imm.bit_length()
 
         if bs == 0:
