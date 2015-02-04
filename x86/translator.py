@@ -250,9 +250,9 @@ def print_instruction(i):
 
 
 def unknown_opcode(ctx, i):
-    print_instruction(i)
-    print(i.id)
-    raise NotImplementedError()
+    #print_instruction(i)
+    #print(i.id)
+    #raise NotImplementedError()
 
     ctx.emit(  unkn_())
 
@@ -346,7 +346,7 @@ class X86_64TranslationContext(TranslationContext):
             capstone.x86.X86_REG_R13:   r('r13', 64),
             capstone.x86.X86_REG_R14:   r('r14', 64),
             capstone.x86.X86_REG_R15:   r('r15', 64),
-            capstone.x86.X86_REG_RIP:   r('rip', 64),
+            #capstone.x86.X86_REG_RIP:   r('rip', 64),
 
             capstone.x86.X86_REG_FS:    r('fsbase', 64),
             capstone.x86.X86_REG_GS:    r('gsbase', 64),

@@ -41,11 +41,11 @@ def _memory_address(ctx, i, opnd):
 
     elif opnd.mem.disp == 0 and opnd.mem.base != 0:
 
-        address = ctx.registers[opnd.mem.base]
+        address = _get_register(ctx, i, opnd.mem.base)
 
     elif opnd.mem.disp != 0 and opnd.mem.base != 0:
 
-        base = ctx.registers[opnd.mem.base]
+        base = _get_register(ctx, i, opnd.mem.base)
         tmp0 = ctx.tmp(ctx.word_size * 2)
         address = ctx.tmp(ctx.word_size)
 
@@ -59,14 +59,14 @@ def _memory_address(ctx, i, opnd):
     else:
         address = imm(0, ctx.word_size)
 
-    if i.segment != 0:
+    if opnd.mem.segment != 0:
 
         tmp0 = ctx.tmp(ctx.word_size * 2)
         prev_address = address
         address = ctx.tmp(ctx.word_size)
 
         ctx.emit(  add_  (prev_address,
-                          ctx.registers[i.segment],
+                          ctx.registers[opnd.mem.segment],
                           tmp0))
 
         ctx.emit(  and_  (tmp0,
@@ -75,7 +75,7 @@ def _memory_address(ctx, i, opnd):
 
     if opnd.mem.index != 0:
 
-        index = ctx.registers[opnd.mem.index]
+        index = _get_register(ctx, i, opnd.mem.index)
         tmp0 = ctx.tmp(ctx.word_size * 2)
         tmp1 = ctx.tmp(ctx.word_size)
         tmp2 = ctx.tmp(ctx.word_size * 2)
@@ -98,7 +98,7 @@ def _memory_address(ctx, i, opnd):
     return address
 
 
-def _memory_size(ctx, i, opnd):
+def _get_memory_size(ctx, i, opnd):
 
     if 'byte' in i.op_str:
         return 8
@@ -119,10 +119,10 @@ def _memory_size(ctx, i, opnd):
         return ctx.word_size
 
 
-def _get_register(ctx, i, opnd):
+def _get_register(ctx, i, reg):
     # full native registers
-    if opnd.reg in ctx.registers:
-        return ctx.registers[opnd.reg]
+    if reg in ctx.registers:
+        return ctx.registers[reg]
 
     # 8-bit low parts
     low_bytes = {
@@ -144,10 +144,10 @@ def _get_register(ctx, i, opnd):
         capstone.x86.X86_REG_R15B:r('r15', 64),
     }
 
-    if opnd.reg in low_bytes:
+    if reg in low_bytes:
         byte_reg = ctx.tmp(8)
 
-        ctx.emit(  str_  (low_bytes[opnd.reg], byte_reg))
+        ctx.emit(  str_  (low_bytes[reg], byte_reg))
 
         return byte_reg
 
@@ -159,9 +159,9 @@ def _get_register(ctx, i, opnd):
         capstone.x86.X86_REG_DH:ctx.data
     }
 
-    if opnd.reg in high_bytes:
+    if reg in high_bytes:
 
-        full_reg = high_bytes[opnd.reg]
+        full_reg = high_bytes[reg]
         word_reg = ctx.tmp(16)
         byte_reg = ctx.tmp(8)
 
@@ -190,10 +190,10 @@ def _get_register(ctx, i, opnd):
         capstone.x86.X86_REG_R15W:r('r15', 64),
     }
 
-    if opnd.reg in low_words:
+    if reg in low_words:
         word_reg = ctx.tmp(16)
 
-        ctx.emit(  str_  (low_words[opnd.reg], word_reg))
+        ctx.emit(  str_  (low_words[reg], word_reg))
 
         return word_reg
 
@@ -217,12 +217,110 @@ def _get_register(ctx, i, opnd):
         capstone.x86.X86_REG_R15D:r('r15', 64),
     }
 
-    if opnd.reg in low_dwords:
+    if reg in low_dwords:
         dword_reg = ctx.tmp(32)
 
-        ctx.emit(  str_  (low_dwords[opnd.reg], dword_reg))
+        ctx.emit(  str_  (low_dwords[reg], dword_reg))
 
         return dword_reg
+
+    if reg == capstone.x86.X86_REG_RIP:
+        qword_reg = ctx.tmp(64)
+
+        ctx.emit(  str_  (imm(i.address + i.size, 64), qword_reg))
+
+        return qword_reg
+
+    raise TranslationError('Unsupported register!')
+
+
+def _get_register_size(ctx, i, reg):
+    # full native registers
+    if reg in ctx.registers:
+        return ctx.registers[reg].size
+
+    # 8-bit low parts
+    low_bytes = [
+        capstone.x86.X86_REG_AL,
+        capstone.x86.X86_REG_BL,
+        capstone.x86.X86_REG_CL,
+        capstone.x86.X86_REG_DL,
+        capstone.x86.X86_REG_SIL,
+        capstone.x86.X86_REG_DIL,
+        capstone.x86.X86_REG_BPL,
+        capstone.x86.X86_REG_SPL,
+        capstone.x86.X86_REG_R8B,
+        capstone.x86.X86_REG_R9B,
+        capstone.x86.X86_REG_R10B,
+        capstone.x86.X86_REG_R11B,
+        capstone.x86.X86_REG_R12B,
+        capstone.x86.X86_REG_R13B,
+        capstone.x86.X86_REG_R14B,
+        capstone.x86.X86_REG_R15B,
+    ]
+
+    if reg in low_bytes:
+        return 8
+
+    # 8-bit high parts
+    high_bytes = [
+        capstone.x86.X86_REG_AH,
+        capstone.x86.X86_REG_BH,
+        capstone.x86.X86_REG_CH,
+        capstone.x86.X86_REG_DH
+    ]
+
+    if reg in high_bytes:
+        return 8
+
+    # 16-byte low parts
+    low_words = {
+        capstone.x86.X86_REG_AX,
+        capstone.x86.X86_REG_BX,
+        capstone.x86.X86_REG_CX,
+        capstone.x86.X86_REG_DX,
+        capstone.x86.X86_REG_SI,
+        capstone.x86.X86_REG_DI,
+        capstone.x86.X86_REG_BP,
+        capstone.x86.X86_REG_SP,
+        capstone.x86.X86_REG_R8W,
+        capstone.x86.X86_REG_R9W,
+        capstone.x86.X86_REG_R10W,
+        capstone.x86.X86_REG_R11W,
+        capstone.x86.X86_REG_R12W,
+        capstone.x86.X86_REG_R13W,
+        capstone.x86.X86_REG_R14W,
+        capstone.x86.X86_REG_R15W,
+    }
+
+    if reg in low_words:
+        return 16
+
+    # 32-byte low parts
+    low_dwords = {
+        capstone.x86.X86_REG_EAX,
+        capstone.x86.X86_REG_EBX,
+        capstone.x86.X86_REG_ECX,
+        capstone.x86.X86_REG_EDX,
+        capstone.x86.X86_REG_ESI,
+        capstone.x86.X86_REG_EDI,
+        capstone.x86.X86_REG_EBP,
+        capstone.x86.X86_REG_ESP,
+        capstone.x86.X86_REG_R8D,
+        capstone.x86.X86_REG_R9D,
+        capstone.x86.X86_REG_R10D,
+        capstone.x86.X86_REG_R11D,
+        capstone.x86.X86_REG_R12D,
+        capstone.x86.X86_REG_R13D,
+        capstone.x86.X86_REG_R14D,
+        capstone.x86.X86_REG_R15D,
+    }
+
+    if reg in low_dwords:
+        return 32
+
+    if reg is capstone.x86.X86_REG_RIP:
+        return 64
 
     raise TranslationError('Unsupported register!')
 
@@ -252,7 +350,7 @@ def _get_memory(ctx, i, opnd):
 
     address = _memory_address(ctx, i, opnd)
 
-    value = ctx.tmp(_memory_size(ctx, i, opnd))
+    value = ctx.tmp(_get_memory_size(ctx, i, opnd))
 
     ctx.emit(  ldm_  (address, value))
 
@@ -272,7 +370,7 @@ def get(ctx, i, index, size=0):
     opnd = i.operands[index]
 
     if opnd.type == capstone.x86.X86_OP_REG:
-        return _get_register(ctx, i, opnd)
+        return _get_register(ctx, i, opnd.reg)
 
     elif opnd.type == capstone.x86.X86_OP_IMM:
         return _get_immediate(ctx, i, opnd, size)
@@ -290,13 +388,13 @@ def get_size(ctx, i, index, size=0):
     opnd = i.operands[index]
 
     if opnd.type == capstone.x86.X86_OP_REG:
-        return _get_register(ctx, i, opnd).size
+        return _get_register_size(ctx, i, opnd.reg)
 
     elif opnd.type == capstone.x86.X86_OP_IMM:
         return _get_immediate(ctx, i, opnd, size).size
 
     elif opnd.type == capstone.x86.X86_OP_MEM:
-        return _memory_size(ctx, i, opnd)
+        return _get_memory_size(ctx, i, opnd)
 
     else:
         raise TranslationError(
@@ -443,7 +541,7 @@ def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
 def _set_memory(ctx, i, opnd, value):
 
     address = _memory_address(ctx, i, opnd)
-    write_size = _memory_size(ctx, i, opnd)
+    write_size = _get_memory_size(ctx, i, opnd)
 
     if value.size > write_size:
 

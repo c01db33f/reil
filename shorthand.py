@@ -211,7 +211,7 @@ def undef_(register):
     again.
     """
 
-    return reil.Instruction(reil.UNDEF, register, None, None)
+    return reil.Instruction(reil.UNDEF, None, None, register)
 
 
 def unkn_():

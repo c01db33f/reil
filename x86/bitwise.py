@@ -195,7 +195,7 @@ def x86_ror(ctx, i):
 
     # TODO: compute carry flag
 
-    if isinstance(b, pyreil.ImmediateOperand) and b.value == 1:
+    if isinstance(b, reil.ImmediateOperand) and b.value == 1:
         # TODO: compute overflow flag
         pass
     else:
