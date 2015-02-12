@@ -319,7 +319,7 @@ def x86_movsx(ctx, i):
     else:
         value = operand.get(ctx, i, 1)
 
-    operand.set(ctx, i, 0, value, clear=True, sign_extend=True)
+    operand.set(ctx, i, 0, value, clear=True, sign_extend=True, full_register=True)
 
 
 def x86_movzx(ctx, i):
@@ -333,8 +333,7 @@ def x86_movzx(ctx, i):
     else:
         value = operand.get(ctx, i, 1)
 
-    operand.set(ctx, i, 0, value, clear=True, sign_extend=False)
-
+    operand.set(ctx, i, 0, value, clear=True, sign_extend=False, full_register=True)
 
 
 def x86_pop(ctx, i):

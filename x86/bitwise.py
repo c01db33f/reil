@@ -155,6 +155,66 @@ def x86_bt(ctx, i):
     ctx.emit(  bisnz_(bit, r('cf', 8)))
 
 
+def x86_rol(ctx, i):
+    a = operand.get(ctx, i, 0)
+    b = operand.get(ctx, i, 1)
+
+    max_shift = ctx.word_size-1
+
+    size = a.size
+    tmp0 = ctx.tmp(size)
+    tmp1 = ctx.tmp(8)
+    tmp2 = ctx.tmp(size * 2)
+    tmp3 = ctx.tmp(size * 2)
+    tmp4 = ctx.tmp(size * 2)
+    tmp5 = ctx.tmp(size)
+    tmp6 = ctx.tmp(size * 2)
+    tmp7 = ctx.tmp(size)
+    tmp8 = ctx.tmp(size)
+    result = ctx.tmp(size)
+
+    # the rotate amount is truncated at word_size - 1
+    ctx.emit(  and_  (b, imm(max_shift, size), tmp0))
+
+    # zero rotate doesn't affect flags
+    ctx.emit(  bisz_ (tmp0, tmp1))
+    ctx.emit(  jcc_  (tmp1, 'zero_rotate'))
+
+    # zero extend
+    ctx.emit(  str_  (a, tmp2))
+
+    # left shift by the correct amount
+    ctx.emit(  lshl_ (tmp2, tmp0, tmp3))
+
+    # truncate to get first half of result
+    ctx.emit(  str_  (tmp4, tmp5))
+
+    # shift out then truncate to get second half of result
+    ctx.emit(  lshr_ (tmp4, imm(max_shift+1, size * 2), tmp6))
+    ctx.emit(  str_  (tmp6, tmp7))
+
+    # or both halves of the result
+    ctx.emit(  or_   (tmp5, tmp7, result))
+
+    # compute carry flag (last bit that was shifted across)
+    ctx.emit(  and_  (result, imm(1, size), tmp8))
+    ctx.emit(  bisnz_(tmp8, r('cf', 8)))
+
+    if isinstance(b, reil.ImmediateOperand) and b.value == 1:
+        # overflow flag is msb of input ^ msb output
+        tmp9 = ctx.tmp(size)
+        ctx.emit(  and_  (a, imm(sign_bit(size), size), tmp9))
+        ctx.emit(  xor_  (tmp9, tmp8, tmp9))
+        ctx.emit(  bisnz_(tmp9, r('of', 8)))
+    else:
+        ctx.emit(  undef_(r('of', 8)))
+
+    operand.set(ctx, i, 0, result)
+
+    ctx.emit(  'zero_rotate')
+    ctx.emit(  nop_())
+
+
 def x86_ror(ctx, i):
     a = operand.get(ctx, i, 0)
     b = operand.get(ctx, i, 1)
@@ -163,45 +223,59 @@ def x86_ror(ctx, i):
 
     size = a.size
     tmp0 = ctx.tmp(size)
-    tmp1 = ctx.tmp(size * 2)
+    tmp1 = ctx.tmp(8)
     tmp2 = ctx.tmp(size * 2)
     tmp3 = ctx.tmp(size * 2)
-    tmp4 = ctx.tmp(size)
-    tmp5 = ctx.tmp(size * 2)
-    tmp6 = ctx.tmp(size)
+    tmp4 = ctx.tmp(size * 2)
+    tmp5 = ctx.tmp(size)
+    tmp6 = ctx.tmp(size * 2)
+    tmp7 = ctx.tmp(size)
+    tmp8 = ctx.tmp(size)
     result = ctx.tmp(size)
 
     # the rotate amount is truncated at word_size - 1
     ctx.emit(  and_  (b, imm(max_shift, size), tmp0))
 
+    # zero rotate doesn't affect flags
+    ctx.emit(  bisz_ (tmp0, tmp1))
+    ctx.emit(  jcc_  (tmp1, 'zero_rotate'))
+
     # zero extend
-    ctx.emit(  str_  (a, tmp1))
+    ctx.emit(  str_  (a, tmp2))
 
     # left shift all the way
-    ctx.emit(  lshl_ (tmp1, imm(max_shift+1, size * 2), tmp2))
+    ctx.emit(  lshl_ (tmp2, imm(max_shift+1, size * 2), tmp3))
 
     # right shift by the correct amount
-    ctx.emit(  lshr_ (tmp2, tmp0, tmp3))
+    ctx.emit(  lshr_ (tmp3, tmp0, tmp4))
 
     # truncate to get first half of result
-    ctx.emit(  str_  (tmp3, tmp4))
+    ctx.emit(  str_  (tmp4, tmp5))
 
     # shift out then truncate to get second half of result
-    ctx.emit(  lshr_ (tmp3, imm(max_shift+1, size * 2), tmp5))
-    ctx.emit(  str_  (tmp5, tmp6))
+    ctx.emit(  lshr_ (tmp4, imm(max_shift+1, size * 2), tmp6))
+    ctx.emit(  str_  (tmp6, tmp7))
 
     # or both halves of the result
-    ctx.emit(  or_   (tmp4, tmp6, result))
+    ctx.emit(  or_   (tmp5, tmp7, result))
 
-    # TODO: compute carry flag
+    # compute carry flag (last bit that was shifted across)
+    ctx.emit(  and_  (result, imm(sign_bit(size), size), tmp8))
+    ctx.emit(  bisnz_(tmp8, r('cf', 8)))
 
     if isinstance(b, reil.ImmediateOperand) and b.value == 1:
-        # TODO: compute overflow flag
-        pass
+        # overflow flag is msb of input ^ msb output
+        tmp9 = ctx.tmp(size)
+        ctx.emit(  and_  (a, imm(sign_bit(size), size), tmp9))
+        ctx.emit(  xor_  (tmp9, tmp8, tmp9))
+        ctx.emit(  bisnz_(tmp9, r('of', 8)))
     else:
         ctx.emit(  undef_(r('of', 8)))
 
     operand.set(ctx, i, 0, result)
+
+    ctx.emit(  'zero_rotate')
+    ctx.emit(  nop_())
 
 
 
@@ -272,47 +346,55 @@ def x86_shl(ctx, i):
 
     size = a.size
     tmp0 = ctx.tmp(size)
-    tmp1 = ctx.tmp(size * 2)
+    tmp1 = ctx.tmp(8)
     tmp2 = ctx.tmp(size * 2)
     tmp3 = ctx.tmp(size * 2)
-    tmp4 = ctx.tmp(8)
-    tmp5 = ctx.tmp(size)
-    tmp6 = ctx.tmp(8)
+    tmp4 = ctx.tmp(size * 2)
+    tmp5 = ctx.tmp(8)
+    tmp6 = ctx.tmp(size)
+    tmp7 = ctx.tmp(8)
     result = ctx.tmp(size)
 
     ctx.emit(  and_  (b, imm(max_shift, size), tmp0))
 
+    # zero shift doesn't affect flags
+    ctx.emit(  bisz_ (tmp0, tmp1))
+    ctx.emit(  jcc_  (tmp1, 'zero_shift'))
+
     # zero extend
-    ctx.emit(  str_  (a, tmp1))
+    ctx.emit(  str_  (a, tmp2))
 
     # left shift by the correct amount
-    ctx.emit(  lshl_ (tmp1, tmp0, tmp2))
+    ctx.emit(  lshl_ (tmp2, tmp0, tmp3))
 
     # truncate to get result
-    ctx.emit(  str_  (tmp2, result))
+    ctx.emit(  str_  (tmp3, result))
 
     # compute carry flag
-    ctx.emit(  and_  (tmp2, imm(carry_bit(size), size * 2), tmp3))
-    ctx.emit(  bisnz_(tmp3, r('cf', 8)))
+    ctx.emit(  and_  (tmp3, imm(carry_bit(size), size * 2), tmp4))
+    ctx.emit(  bisnz_(tmp4, r('cf', 8)))
 
-    ctx.emit(  equ_  (tmp0, imm(1, size), tmp4))
-    ctx.emit(  bisz_ (tmp4, tmp4))
-    ctx.emit(  jcc_  (tmp4, 'no_overflow_flag'))
+    ctx.emit(  equ_  (tmp0, imm(1, size), tmp5))
+    ctx.emit(  bisz_ (tmp5, tmp5))
+    ctx.emit(  jcc_  (tmp5, 'no_overflow_flag'))
 
     # compute overflow flag
-    ctx.emit(  and_  (result, imm(sign_bit(size), size), tmp5))
-    ctx.emit(  bisz_ (tmp5, tmp6))
-    ctx.emit(  equ_  (r('cf', 8), tmp6, r('of', 8)))
+    ctx.emit(  and_  (result, imm(sign_bit(size), size), tmp6))
+    ctx.emit(  bisnz_(tmp6, tmp7))
+    ctx.emit(  xor_  (r('cf', 8), tmp7, r('of', 8)))
     ctx.emit(  jcc_  (imm(1, 8), 'overflow_flag_done'))
 
     ctx.emit('no_overflow_flag')
-    ctx.emit(  str_  (imm(0, 8), r('of', 8)))
+    ctx.emit(  undef_(r('of', 8)))
 
     ctx.emit('overflow_flag_done')
 
     _shift_set_flags(ctx, result)
 
     operand.set(ctx, i, 0, result)
+
+    ctx.emit(  'zero_shift')
+    ctx.emit(  nop_())
 
 
 def x86_shr(ctx, i):
@@ -330,56 +412,60 @@ def x86_shr(ctx, i):
 
     size = a.size
     tmp0 = ctx.tmp(size)
-    tmp1 = ctx.tmp(size * 2)
+    tmp1 = ctx.tmp(8)
     tmp2 = ctx.tmp(size * 2)
     tmp3 = ctx.tmp(size * 2)
     tmp4 = ctx.tmp(size * 2)
-    tmp5 = ctx.tmp(8)
-    tmp6 = ctx.tmp(size)
+    tmp5 = ctx.tmp(size * 2)
+    tmp6 = ctx.tmp(8)
     tmp7 = ctx.tmp(size)
+    tmp8 = ctx.tmp(size)
     result = ctx.tmp(size)
 
     # the shift amount is truncated at word_size - 1
     ctx.emit(  and_  (b, imm(max_shift, size), tmp0))
 
+    # zero shift doesn't affect flags
+    ctx.emit(  bisz_ (tmp0, tmp1))
+    ctx.emit(  jcc_  (tmp1, 'zero_shift'))
+
     # zero extend
-    ctx.emit(  str_  (a, tmp1))
+    ctx.emit(  str_  (a, tmp2))
 
     # left shift all the way
-    ctx.emit(  lshl_ (tmp1, imm(max_shift+1, size * 2), tmp2))
+    ctx.emit(  lshl_ (tmp2, imm(max_shift+1, size * 2), tmp3))
 
     # right shift by the correct amount
-    ctx.emit(  lshr_ (tmp2, tmp0, tmp3))
+    ctx.emit(  lshr_ (tmp3, tmp0, tmp4))
 
     # shift out then truncate to get second half of result
-    ctx.emit(  lshr_ (tmp3, imm(max_shift+1, size * 2), tmp4))
-    ctx.emit(  str_  (tmp4, result))
+    ctx.emit(  lshr_ (tmp4, imm(max_shift+1, size * 2), tmp5))
+    ctx.emit(  str_  (tmp5, result))
 
-    # according to intel manual, of is set only for one-bit shifts.
-    # in practice, appears to be set regardless, so I am doing so also
-    # since in any case, for multi-bit-shifts it is 'undefined'...
-
-    #ctx.emit(  equ_  (tmp0, imm(1, size), tmp5))
-    #ctx.emit(  bisz_ (tmp5, tmp5))
-    #ctx.emit(  jcc_  (tmp5, 'no_overflow_flag'))
+    ctx.emit(  equ_  (tmp0, imm(1, size), tmp6))
+    ctx.emit(  bisz_ (tmp6, tmp6))
+    ctx.emit(  jcc_  (tmp6, 'no_overflow_flag'))
 
     # compute overflow flag
-    ctx.emit(  and_  (a, imm(sign_bit(size), size), tmp6))
-    ctx.emit(  bisnz_(tmp6, r('of', 8)))
-    #ctx.emit(  jcc_  (imm(1, 8), 'overflow_flag_done'))
+    ctx.emit(  and_  (a, imm(sign_bit(size), size), tmp7))
+    ctx.emit(  bisnz_(tmp7, r('of', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'overflow_flag_done'))
 
-    #ctx.emit('no_overflow_flag')
-    #ctx.emit(  str_  (imm(0, 8), r('of', 8)))
+    ctx.emit('no_overflow_flag')
+    ctx.emit(  undef_(r('of', 8)))
 
-    #ctx.emit('overflow_flag_done')
+    ctx.emit('overflow_flag_done')
 
     # compute carry flag (last bit to be shifted out)
-    ctx.emit(  and_  (tmp3, imm(sign_bit(size), size), tmp7))
-    ctx.emit(  bisnz_(tmp7, r('cf', 8)))
+    ctx.emit(  and_  (tmp4, imm(sign_bit(size), size), tmp8))
+    ctx.emit(  bisnz_(tmp8, r('cf', 8)))
 
     _shift_set_flags(ctx, result)
 
     operand.set(ctx, i, 0, result)
+
+    ctx.emit(  'zero_shift')
+    ctx.emit(  nop_())
 
 
 def x86_shrd(ctx, i):

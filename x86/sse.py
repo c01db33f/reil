@@ -168,7 +168,7 @@ def x86_pmovmskb(ctx, i):
     bits = []
     for a_byte in a_bytes:
         tmp0 = ctx.tmp(8)
-        ctx.emit(  and_  (a_byte, imm(0x80, 8), tmp0))
+        ctx.emit(  and_  (a_byte, imm(sign_bit(8), 8), tmp0))
         ctx.emit(  bisnz_(tmp0, tmp0))
         bits.append(tmp0)
 

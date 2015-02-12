@@ -48,7 +48,6 @@ opcode_handlers = {
     capstone.x86.X86_INS_BSF:       bitwise.x86_bsf,
     capstone.x86.X86_INS_BSR:       bitwise.x86_bsr,
     capstone.x86.X86_INS_BT:        bitwise.x86_bt,
-    #capstone.x86.X86_INS_BSWAPQ:    misc.x86_bswapq,
 
     capstone.x86.X86_INS_CBW:       misc.x86_cbw,
     capstone.x86.X86_INS_CLD:       misc.x86_cld,
@@ -153,6 +152,7 @@ opcode_handlers = {
     capstone.x86.X86_INS_PXOR:      sse.x86_pxor,
     capstone.x86.X86_INS_RET:       control_flow.x86_ret,
     capstone.x86.X86_INS_RDTSC:     misc.x86_rdtsc,
+    capstone.x86.X86_INS_ROL:       bitwise.x86_rol,
     capstone.x86.X86_INS_ROR:       bitwise.x86_ror,
     capstone.x86.X86_INS_SAR:       bitwise.x86_sar,
     capstone.x86.X86_INS_SBB:       arithmetic.x86_sbb,

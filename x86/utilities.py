@@ -71,3 +71,41 @@ def set_pf(ctx, result):
     ctx.emit(  and_  (tmp2, imm(1, 8), r('pf', 8)))
 
 
+def unpack(ctx, value, size):
+    """Unpack value into components of size."""
+
+    parts = []
+
+    tmp0 = value
+    for i in range(0, value.size // size):
+        part = ctx.tmp(size)
+
+        tmp1 = tmp0
+        tmp0 = ctx.tmp(value.size)
+
+        ctx.emit(  str_  (tmp1, part))
+        ctx.emit(  lshr_ (tmp1, imm(size, 8), tmp0))
+
+        parts.append(part)
+
+    return parts
+
+
+def pack(ctx, parts):
+    """Pack parts into a single value."""
+
+    parts.reverse()
+
+    size = len(parts) * parts[0].size
+
+    value = imm(0, size)
+
+    for part in parts:
+        prev_value = value
+        tmp0 = ctx.tmp(size)
+        value = ctx.tmp(size)
+
+        ctx.emit(  lshl_ (prev_value, imm(part.size, 8), tmp0))
+        ctx.emit(  add_  (part, tmp0, value))
+
+    return value
