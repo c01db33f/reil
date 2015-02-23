@@ -520,7 +520,7 @@ def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False, full_regi
     if value.size > reg.size:
         value = truncate_value(value, reg.size)
 
-    elif value.size < reg.size && not full_register:
+    elif value.size < reg.size and not full_register:
         prev_value = value
         value = ctx.tmp(reg.size)
 
