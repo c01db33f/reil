@@ -401,7 +401,7 @@ def get_size(ctx, i, index, size=0):
             'Unsupported operand type!')
 
 
-def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False, full_register=False):
+def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
 
     low_bytes = {
         capstone.x86.X86_REG_AL:ctx.accumulator,
@@ -520,7 +520,7 @@ def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False, full_regi
     if value.size > reg.size:
         value = truncate_value(value, reg.size)
 
-    elif value.size < reg.size and not full_register:
+    elif value.size < reg.size:
         prev_value = value
         value = ctx.tmp(reg.size)
 

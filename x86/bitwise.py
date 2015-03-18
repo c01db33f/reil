@@ -166,8 +166,8 @@ def x86_rol(ctx, i):
     tmp1 = ctx.tmp(8)
     tmp2 = ctx.tmp(size * 2)
     tmp3 = ctx.tmp(size * 2)
-    tmp4 = ctx.tmp(size * 2)
-    tmp5 = ctx.tmp(size)
+    tmp4 = ctx.tmp(size)
+    tmp5 = ctx.tmp(size * 2)
     tmp6 = ctx.tmp(size * 2)
     tmp7 = ctx.tmp(size)
     tmp8 = ctx.tmp(size)
@@ -187,25 +187,25 @@ def x86_rol(ctx, i):
     ctx.emit(  lshl_ (tmp2, tmp0, tmp3))
 
     # truncate to get first half of result
-    ctx.emit(  str_  (tmp4, tmp5))
+    ctx.emit(  str_  (tmp3, tmp4))
 
     # shift out then truncate to get second half of result
-    ctx.emit(  lshr_ (tmp4, imm(max_shift+1, size * 2), tmp6))
-    ctx.emit(  str_  (tmp6, tmp7))
+    ctx.emit(  lshr_ (tmp3, imm(max_shift+1, size * 2), tmp5))
+    ctx.emit(  str_  (tmp5, tmp6))
 
     # or both halves of the result
-    ctx.emit(  or_   (tmp5, tmp7, result))
+    ctx.emit(  or_   (tmp4, tmp6, result))
 
     # compute carry flag (last bit that was shifted across)
-    ctx.emit(  and_  (result, imm(1, size), tmp8))
-    ctx.emit(  bisnz_(tmp8, r('cf', 8)))
+    ctx.emit(  and_  (result, imm(1, size), tmp7))
+    ctx.emit(  bisnz_(tmp7, r('cf', 8)))
 
     if isinstance(b, reil.ImmediateOperand) and b.value == 1:
         # overflow flag is msb of input ^ msb output
         tmp9 = ctx.tmp(size)
-        ctx.emit(  and_  (a, imm(sign_bit(size), size), tmp9))
-        ctx.emit(  xor_  (tmp9, tmp8, tmp9))
-        ctx.emit(  bisnz_(tmp9, r('of', 8)))
+        ctx.emit(  and_  (a, imm(sign_bit(size), size), tmp8))
+        ctx.emit(  xor_  (tmp8, tmp7, tmp8))
+        ctx.emit(  bisnz_(tmp8, r('of', 8)))
     else:
         ctx.emit(  undef_(r('of', 8)))
 
@@ -503,3 +503,4 @@ def x86_shrd(ctx, i):
     _shift_set_flags(ctx, result)
 
     operand.set(ctx, i, 0, result)
+

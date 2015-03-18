@@ -81,7 +81,11 @@ def rep_epilogue(ctx, i):
         ctx.emit(  and_  (r('zf', 8), cond, cond))
 
     # we're not done, jump back to start of instruction
-    ctx.emit(  jcc_  (cond, imm(i.address, ctx.word_size)))
+    ctx.emit(  jcc_  (cond, off(0)))
+
+    # TODO: decide which of these is preferable; or add a flag to translation
+    # to determine whether we unroll rep x; instructions.
+    #ctx.emit(  jcc_  (cond, imm(i.address, ctx.word_size)))
 
 
 def x86_cmova(ctx, i):
@@ -311,29 +315,25 @@ def x86_movsw(ctx, i):
 def x86_movsx(ctx, i):
     value = None
 
-    dst = operand.get(ctx, i, 0)
-
     if len(i.operands) == 1:
         # source is the accumulator
         value = ctx.accumulator
     else:
         value = operand.get(ctx, i, 1)
 
-    operand.set(ctx, i, 0, value, clear=True, sign_extend=True, full_register=True)
+    operand.set(ctx, i, 0, value, clear=True, sign_extend=True)
 
 
 def x86_movzx(ctx, i):
     value = None
 
-    dst = operand.get(ctx, i, 0)
-
     if len(i.operands) == 1:
         # source is the accumulator
         value = ctx.accumulator
     else:
         value = operand.get(ctx, i, 1)
 
-    operand.set(ctx, i, 0, value, clear=True, sign_extend=False, full_register=True)
+    operand.set(ctx, i, 0, value, clear=True, sign_extend=False)
 
 
 def x86_pop(ctx, i):
@@ -456,3 +456,4 @@ def x86_stosq(ctx, i):
 
 def x86_stosw(ctx, i):
     x86_stos(ctx, i, 16)
+

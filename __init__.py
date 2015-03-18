@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 """
-pyreil
+reil
 
 This module generates REIL (reverse engineering intermediate language)
 IL for a number of different processor architectures, to enable the
@@ -26,3 +26,4 @@ development of various program analysis tools.
 """
 
 from reil.definitions import *
+

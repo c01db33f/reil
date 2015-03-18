@@ -21,7 +21,7 @@ instructions and operands.
 """
 
 
-import reil.definitions as reil
+import reil.definitions as definitions
 
 
 def imm(value, size):
@@ -32,7 +32,7 @@ def imm(value, size):
         size (int): The size in bits of the operand.
     """
 
-    return reil.ImmediateOperand(value, size)
+    return definitions.ImmediateOperand(value, size)
 
 
 def off(offset):
@@ -43,7 +43,7 @@ def off(offset):
     the current native instruction).
     """
 
-    return reil.OffsetOperand(offset)
+    return definitions.OffsetOperand(offset)
 
 
 def r(name, size):
@@ -54,7 +54,7 @@ def r(name, size):
         size (int): The size in bits of the operand.
     """
 
-    return reil.RegisterOperand(name, size)
+    return definitions.RegisterOperand(name, size)
 
 
 def t(index, size):
@@ -65,7 +65,7 @@ def t(index, size):
         size (int): The size in bits of the operand.
     """
 
-    return reil.TemporaryOperand(index, size)
+    return definitions.TemporaryOperand(index, size)
 
 
 def add_(input0, input1, output):
@@ -75,7 +75,7 @@ def add_(input0, input1, output):
     register.
     """
 
-    return reil.Instruction(reil.ADD, input0, input1, output)
+    return definitions.Instruction(definitions.ADD, input0, input1, output)
 
 
 def and_(input0, input1, output):
@@ -84,7 +84,7 @@ def and_(input0, input1, output):
     literals and register values. The output operand must be a register.
     """
 
-    return reil.Instruction(reil.AND, input0, input1, output)
+    return definitions.Instruction(definitions.AND, input0, input1, output)
 
 
 def bisz_(condition, output):
@@ -93,7 +93,7 @@ def bisz_(condition, output):
     operand is a register.
     """
 
-    return reil.Instruction(reil.BISZ, condition, None, output)
+    return definitions.Instruction(definitions.BISZ, condition, None, output)
 
 
 def bsh_(input0, input1, output):
@@ -104,7 +104,7 @@ def bsh_(input0, input1, output):
     a register.
     """
 
-    return reil.Instruction(reil.BSH, input0, input1, output)
+    return definitions.Instruction(definitions.BSH, input0, input1, output)
 
 
 def div_(input0, input1, output):
@@ -114,7 +114,7 @@ def div_(input0, input1, output):
     literals while the output operand must be a register.
     """
 
-    return reil.Instruction(reil.DIV, input0, input1, output)
+    return definitions.Instruction(definitions.DIV, input0, input1, output)
 
 
 def jcc_(condition, target):
@@ -125,7 +125,7 @@ def jcc_(condition, target):
     either a register, a literal, or a REIL offset.
     """
 
-    return reil.Instruction(reil.JCC, condition, None, target)
+    return definitions.Instruction(definitions.JCC, condition, None, target)
 
 
 def ldm_(address, output):
@@ -136,7 +136,7 @@ def ldm_(address, output):
     are read from memory.
     """
 
-    return reil.Instruction(reil.LDM, address, None, output)
+    return definitions.Instruction(definitions.LDM, address, None, output)
 
 
 def mod_(input0, input1, output):
@@ -145,7 +145,7 @@ def mod_(input0, input1, output):
     the output operand must be a register.
     """
 
-    return reil.Instruction(reil.MOD, input0, input1, output)
+    return definitions.Instruction(definitions.MOD, input0, input1, output)
 
 
 def mul_(input0, input1, output):
@@ -154,13 +154,13 @@ def mul_(input0, input1, output):
     the output operand must be a register.
     """
 
-    return reil.Instruction(reil.MUL, input0, input1, output)
+    return definitions.Instruction(definitions.MUL, input0, input1, output)
 
 
 def nop_():
     """Does nothing."""
 
-    return reil.Instruction(reil.NOP, None, None, None)
+    return definitions.Instruction(definitions.NOP, None, None, None)
 
 
 def or_(input0, input1, output):
@@ -170,7 +170,7 @@ def or_(input0, input1, output):
     register.
     """
 
-    return reil.Instruction(reil.OR, input0, input1, output)
+    return definitions.Instruction(definitions.OR, input0, input1, output)
 
 
 def stm_(value, address):
@@ -181,7 +181,7 @@ def stm_(value, address):
     number of bytes to be written to memory.
     """
 
-    return reil.Instruction(reil.STM, value, None, address)
+    return definitions.Instruction(definitions.STM, value, None, address)
 
 
 def str_(input0, output):
@@ -191,7 +191,7 @@ def str_(input0, output):
     the input is zero-extended.
     """
 
-    return reil.Instruction(reil.STR, input0, None, output)
+    return definitions.Instruction(definitions.STR, input0, None, output)
 
 
 def sub_(input0, input1, output):
@@ -201,7 +201,7 @@ def sub_(input0, input1, output):
     register.
     """
 
-    return reil.Instruction(reil.SUB, input0, input1, output)
+    return definitions.Instruction(definitions.SUB, input0, input1, output)
 
 
 def undef_(register):
@@ -211,7 +211,7 @@ def undef_(register):
     again.
     """
 
-    return reil.Instruction(reil.UNDEF, None, None, register)
+    return definitions.Instruction(definitions.UNDEF, None, None, register)
 
 
 def unkn_():
@@ -219,7 +219,7 @@ def unkn_():
     instruction that can not be translated by the REIL translator.
     """
 
-    return reil.Instruction(reil.UNKN, None, None, None)
+    return definitions.Instruction(definitions.UNKN, None, None, None)
 
 
 def xor_(input0, input1, output):
@@ -229,7 +229,7 @@ def xor_(input0, input1, output):
     register.
     """
 
-    return reil.Instruction(reil.XOR, input0, input1, output)
+    return definitions.Instruction(definitions.XOR, input0, input1, output)
 
 
 def bisnz_(condition, output):
@@ -240,7 +240,7 @@ def bisnz_(condition, output):
     operand is a register.
     """
 
-    return reil.Instruction(reil.BISNZ, condition, None, output)
+    return definitions.Instruction(definitions.BISNZ, condition, None, output)
 
 
 def equ_(input0, input1, output):
@@ -251,7 +251,7 @@ def equ_(input0, input1, output):
     operand is a register.
     """
 
-    return reil.Instruction(reil.EQU, input0, input1, output)
+    return definitions.Instruction(definitions.EQU, input0, input1, output)
 
 
 def lshl_(input0, input1, output):
@@ -262,7 +262,7 @@ def lshl_(input0, input1, output):
     a register.
     """
 
-    return reil.Instruction(reil.LSHL, input0, input1, output)
+    return definitions.Instruction(definitions.LSHL, input0, input1, output)
 
 
 def lshr_(input0, input1, output):
@@ -273,7 +273,7 @@ def lshr_(input0, input1, output):
     a register.
     """
 
-    return reil.Instruction(reil.LSHR, input0, input1, output)
+    return definitions.Instruction(definitions.LSHR, input0, input1, output)
 
 
 def ashr_(input0, input1, output):
@@ -284,7 +284,7 @@ def ashr_(input0, input1, output):
     must be a register.
     """
 
-    return reil.Instruction(reil.ASHR, input0, input1, output)
+    return definitions.Instruction(definitions.ASHR, input0, input1, output)
 
 
 def sdiv_(input0, input1, output):
@@ -294,7 +294,7 @@ def sdiv_(input0, input1, output):
     literals while the output operand must be a register.
     """
 
-    return reil.Instruction(reil.SDIV, input0, input1, output)
+    return definitions.Instruction(definitions.SDIV, input0, input1, output)
 
 
 def sex_(input0, output):
@@ -306,7 +306,7 @@ def sex_(input0, output):
     of zero-extended.
     """
 
-    return reil.Instruction(reil.SEX, input0, None, output)
+    return definitions.Instruction(definitions.SEX, input0, None, output)
 
 
 def sys_(input0=None):
@@ -319,4 +319,4 @@ def sys_(input0=None):
     first input operand.
     """
 
-    return reil.Instruction(reil.SYS, input0, None, None)
+    return definitions.Instruction(definitions.SYS, input0, None, None)
