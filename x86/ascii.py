@@ -1,0 +1,149 @@
+# -*- coding: utf-8 -*-
+
+#    Copyright 2015 Mark Brand - c01db33f (at) gmail.com
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+"""reil.x86.ascii - x86 and x86_64 translators
+
+This module generates REIL (reverse engineering intermediate language)
+IL from x86 and x86_64 machine code.
+
+This file is responsible for translation of the x86 ASCII adjust instructions
+used for binary-coded-decimal arithmetic.
+"""
+
+import capstone
+import capstone.x86
+
+import reil
+import reil.error
+from reil.shorthand import *
+
+import reil.x86.conditional as conditional
+import reil.x86.operand as operand
+from reil.x86.utilities import *
+
+
+def x86_aaa(ctx, i):
+
+    al = operand.get_register(ctx, i, 'al')
+    ah = operand.get_register(ctx, i, 'ah')
+
+    result_al = ctx.tmp(8)
+    result_ah = ctx.tmp(8)
+    tmp0 = ctx.tmp(16)
+    tmp1 = ctx.tmp(8)
+
+    # ((al & 0xf) > 9
+    ctx.emit(  and_  (al, imm(0xf, 8), result_al))
+    ctx.emit(  sub_  (result_al, imm(9, 8), tmp0))
+    ctx.emit(  and_  (tmp0, imm(0xff00, 16), tmp0))
+    ctx.emit(  bisnz_(tmp0, tmp1))
+    #                  || af == 1)
+    ctx.emit(  or_   (tmp1, r('af', 8), tmp1))
+    ctx.emit(  jcc_  (tmp1, 'adjust'))
+
+    ctx.emit(  str_  (imm(0, 8), r('af', 8)))
+    ctx.emit(  str_  (imm(0, 8), r('cf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    ctx.emit('adjust')
+    ctx.emit(  add_  (result_al, imm(6, 8), tmp0))
+    ctx.emit(  str_  (tmp0, result_al))
+
+    ctx.emit(  add_  (ah, imm(1, 8), tmp0))
+    ctx.emit(  str_  (tmp0, result_ah))
+
+    ctx.emit(  str_  (imm(1, 8), r('af', 8)))
+    ctx.emit(  str_  (imm(1, 8), r('cf', 8)))
+
+    ctx.emit('done')
+
+    ctx.emit(  undef_(r('of', 8)))
+    ctx.emit(  undef_(r('sf', 8)))
+    ctx.emit(  undef_(r('zf', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
+
+    operand.set_register(ctx, i, 'al', result_al)
+    operand.set_register(ctx, i, 'ah', result_ah)
+
+
+def x86_aad(ctx, i):
+
+    al = operand.get_register(ctx, i, 'al')
+    ah = operand.get_register(ctx, i, 'ah')
+    base = imm(10, 8)
+
+    result_al = ctx.tmp(8)
+    result_ah = imm(0, 8)
+    tmp0 = ctx.tmp(16)
+
+    ctx.emit(  mul_  (ah, base, tmp0))
+    ctx.emit(  add_  (al, tmp0, tmp0))
+    ctx.emit(  str_  (tmp0, result_al))
+
+    ctx.emit(  and_  (result_al, imm(sign_bit(8), 8), r('sf')))
+    ctx.emit(  bisz_ (result_al, r('zf')))
+    set_pf(ctx, result_al)
+
+    ctx.emit(  undef_(r('of', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+    ctx.emit(  undef_(r('cf', 8)))
+
+    operand.set_register(ctx, i, 'al', result_al)
+    operand.set_register(ctx, i, 'ah', result_ah)
+
+
+def x86_aas(ctx, i):
+
+    al = operand.get_register(ctx, i, 'al')
+    ah = operand.get_register(ctx, i, 'ah')
+
+    result_al = ctx.tmp(8)
+    result_ah = ctx.tmp(8)
+    tmp0 = ctx.tmp(16)
+    tmp1 = ctx.tmp(8)
+
+    # ((al & 0xf) > 9
+    ctx.emit(  and_  (al, imm(0xf, 8), result_al))
+    ctx.emit(  sub_  (result_al, imm(9, 8), tmp0))
+    ctx.emit(  and_  (tmp0, imm(0xff00, 16), tmp0))
+    ctx.emit(  bisnz_(tmp0, tmp1))
+    #                  || af == 1)
+    ctx.emit(  or_   (tmp1, r('af', 8), tmp1))
+    ctx.emit(  jcc_  (tmp1, 'adjust'))
+
+    ctx.emit(  str_  (imm(0, 8), r('af', 8)))
+    ctx.emit(  str_  (imm(0, 8), r('cf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    ctx.emit('adjust')
+    ctx.emit(  sub_  (result_al, imm(6, 8), tmp0))
+    ctx.emit(  str_  (tmp0, result_al))
+
+    ctx.emit(  sub_  (ah, imm(1, 8), tmp0))
+    ctx.emit(  str_  (tmp0, result_ah))
+
+    ctx.emit(  str_  (imm(1, 8), r('af', 8)))
+    ctx.emit(  str_  (imm(1, 8), r('cf', 8)))
+
+    ctx.emit('done')
+
+    ctx.emit(  undef_(r('of', 8)))
+    ctx.emit(  undef_(r('sf', 8)))
+    ctx.emit(  undef_(r('zf', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
+
+    operand.set_register(ctx, i, 'al', result_al)
+    operand.set_register(ctx, i, 'ah', result_ah)

@@ -31,6 +31,88 @@ from reil.shorthand import *
 from reil.x86.utilities import *
 
 
+def _reg_id_from_name(name):
+    register_lookup = {
+        'al':capstone.x86.X86_REG_AL,
+        'ah':capstone.x86.X86_REG_AH,
+        'bl':capstone.x86.X86_REG_BL,
+        'bh':capstone.x86.X86_REG_BH,
+        'cl':capstone.x86.X86_REG_CL,
+        'ch':capstone.x86.X86_REG_CH,
+        'dl':capstone.x86.X86_REG_DL,
+        'dh':capstone.x86.X86_REG_DH,
+        'sil':capstone.x86.X86_REG_SIL,
+        'dil':capstone.x86.X86_REG_DIL,
+        'bpl':capstone.x86.X86_REG_BPL,
+        'spl':capstone.x86.X86_REG_SPL,
+        'r8b':capstone.x86.X86_REG_R8B,
+        'r9b':capstone.x86.X86_REG_R9B,
+        'r10b':capstone.x86.X86_REG_R10B,
+        'r11b':capstone.x86.X86_REG_R11B,
+        'r12b':capstone.x86.X86_REG_R12B,
+        'r13b':capstone.x86.X86_REG_R13B,
+        'r14b':capstone.x86.X86_REG_R14B,
+        'r15b':capstone.x86.X86_REG_R15B,
+
+        'ax':capstone.x86.X86_REG_AX,
+        'bx':capstone.x86.X86_REG_BX,
+        'cx':capstone.x86.X86_REG_CX,
+        'dx':capstone.x86.X86_REG_DX,
+        'si':capstone.x86.X86_REG_SI,
+        'di':capstone.x86.X86_REG_DI,
+        'bp':capstone.x86.X86_REG_BP,
+        'sp':capstone.x86.X86_REG_SP,
+        'r8w':capstone.x86.X86_REG_R8W,
+        'r9w':capstone.x86.X86_REG_R9W,
+        'r10w':capstone.x86.X86_REG_R10W,
+        'r11w':capstone.x86.X86_REG_R11W,
+        'r12w':capstone.x86.X86_REG_R12W,
+        'r13w':capstone.x86.X86_REG_R13W,
+        'r14w':capstone.x86.X86_REG_R14W,
+        'r15w':capstone.x86.X86_REG_R15W,
+
+        'eax':capstone.x86.X86_REG_EAX,
+        'ebx':capstone.x86.X86_REG_EBX,
+        'ecx':capstone.x86.X86_REG_ECX,
+        'edx':capstone.x86.X86_REG_EDX,
+        'esi':capstone.x86.X86_REG_ESI,
+        'edi':capstone.x86.X86_REG_EDI,
+        'ebp':capstone.x86.X86_REG_EBP,
+        'esp':capstone.x86.X86_REG_ESP,
+        'r8d':capstone.x86.X86_REG_R8,
+        'r9d':capstone.x86.X86_REG_R9,
+        'r10d':capstone.x86.X86_REG_R10D,
+        'r11d':capstone.x86.X86_REG_R11D,
+        'r12d':capstone.x86.X86_REG_R12D,
+        'r13d':capstone.x86.X86_REG_R13D,
+        'r14d':capstone.x86.X86_REG_R14D,
+        'r15d':capstone.x86.X86_REG_R15D,
+
+        'rax':capstone.x86.X86_REG_AX,
+        'rbx':capstone.x86.X86_REG_BX,
+        'rcx':capstone.x86.X86_REG_CX,
+        'rdx':capstone.x86.X86_REG_DX,
+        'rsi':capstone.x86.X86_REG_SI,
+        'rdi':capstone.x86.X86_REG_DI,
+        'rbp':capstone.x86.X86_REG_BP,
+        'rsp':capstone.x86.X86_REG_SP,
+        'r8':capstone.x86.X86_REG_R8,
+        'r9':capstone.x86.X86_REG_R9,
+        'r10':capstone.x86.X86_REG_R10,
+        'r11':capstone.x86.X86_REG_R11,
+        'r12':capstone.x86.X86_REG_R12,
+        'r13':capstone.x86.X86_REG_R13,
+        'r14':capstone.x86.X86_REG_R14,
+        'r15':capstone.x86.X86_REG_R15,
+        'rip':capstone.x86.X86_REG_RIP
+    }
+
+    if name not in register_lookup:
+        raise TranslationError('Invalid Register {}'.format(name))
+
+    return register_lookup[name]
+
+
 def _memory_address(ctx, i, opnd):
 
     address = None
@@ -234,10 +316,10 @@ def _get_register(ctx, i, reg):
     raise TranslationError('Unsupported register!')
 
 
-def _get_register_size(ctx, i, reg):
+def _get_register_size(ctx, i, reg_id):
     # full native registers
-    if reg in ctx.registers:
-        return ctx.registers[reg].size
+    if reg_id in ctx.registers:
+        return ctx.registers[reg_id].size
 
     # 8-bit low parts
     low_bytes = [
@@ -259,7 +341,7 @@ def _get_register_size(ctx, i, reg):
         capstone.x86.X86_REG_R15B,
     ]
 
-    if reg in low_bytes:
+    if reg_id in low_bytes:
         return 8
 
     # 8-bit high parts
@@ -270,7 +352,7 @@ def _get_register_size(ctx, i, reg):
         capstone.x86.X86_REG_DH
     ]
 
-    if reg in high_bytes:
+    if reg_id in high_bytes:
         return 8
 
     # 16-byte low parts
@@ -293,7 +375,7 @@ def _get_register_size(ctx, i, reg):
         capstone.x86.X86_REG_R15W,
     }
 
-    if reg in low_words:
+    if reg_id in low_words:
         return 16
 
     # 32-byte low parts
@@ -316,10 +398,10 @@ def _get_register_size(ctx, i, reg):
         capstone.x86.X86_REG_R15D,
     }
 
-    if reg in low_dwords:
+    if reg_id in low_dwords:
         return 32
 
-    if reg is capstone.x86.X86_REG_RIP:
+    if reg_id is capstone.x86.X86_REG_RIP:
         return 64
 
     raise TranslationError('Unsupported register!')
@@ -365,6 +447,12 @@ def get_address(ctx, i, index):
     return address
 
 
+def get_register(ctx, i, name):
+    reg_id = _reg_id_from_name(name)
+
+    return _get_register(ctx, i, reg_id)
+
+
 def get(ctx, i, index, size=0):
 
     opnd = i.operands[index]
@@ -401,7 +489,7 @@ def get_size(ctx, i, index, size=0):
             'Unsupported operand type!')
 
 
-def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
+def _set_register(ctx, i, reg_id, value, clear=False, sign_extend=False):
 
     low_bytes = {
         capstone.x86.X86_REG_AL:ctx.accumulator,
@@ -477,19 +565,19 @@ def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
         return value
 
     # full native registers
-    if opnd.reg in ctx.registers:
-        reg = ctx.registers[opnd.reg]
+    if reg_id in ctx.registers:
+        reg = ctx.registers[reg_id]
         set_mask = imm(mask(reg.size), reg.size)
 
     # 8-bit low parts
-    elif opnd.reg in low_bytes:
-        reg = low_bytes[opnd.reg]
+    elif reg_id in low_bytes:
+        reg = low_bytes[reg_id]
         set_mask = imm(~mask(8), reg.size)
         value = truncate_value(value, 8)
 
     # 8-bit high parts
-    elif opnd.reg in high_bytes:
-        reg = high_bytes[opnd.reg]
+    elif reg_id in high_bytes:
+        reg = high_bytes[reg_id]
         value = truncate_value(value, 8)
 
         prev_value = value
@@ -503,14 +591,14 @@ def _set_register(ctx, i, opnd, value, clear=False, sign_extend=False):
         ctx.emit(  or_   (tmp0, tmp1, value))
 
     # 16-bit low parts
-    elif opnd.reg in low_words:
-        reg = low_words[opnd.reg]
+    elif reg_id in low_words:
+        reg = low_words[reg_id]
         set_mask = imm(~mask(16), reg.size)
         value = truncate_value(value, 16)
 
     # 32-bit low parts
-    elif opnd.reg in low_dwords:
-        reg = low_dwords[opnd.reg]
+    elif reg_id in low_dwords:
+        reg = low_dwords[reg_id]
         set_mask = imm(~mask(32), reg.size)
         value = truncate_value(value, 32)
 
@@ -553,12 +641,12 @@ def _set_memory(ctx, i, opnd, value):
     ctx.emit(  stm_  (value, address))
 
 
-def set(ctx, i, index, value, clear=False, sign_extend=False, full_register=False):
+def set(ctx, i, index, value, clear=False, sign_extend=False):
 
     opnd = i.operands[index]
 
     if opnd.type == capstone.x86.X86_OP_REG:
-        return _set_register(ctx, i, opnd, value, clear, sign_extend, full_register)
+        return _set_register(ctx, i, opnd.reg, value, clear, sign_extend)
 
     elif opnd.type == capstone.x86.X86_OP_MEM:
         return _set_memory(ctx, i, opnd, value)
@@ -566,3 +654,9 @@ def set(ctx, i, index, value, clear=False, sign_extend=False, full_register=Fals
     else:
         raise TranslationError(
             'Unsupported operand type!')
+
+
+def set_register(ctx, i, name, value, clear=False, sign_extend=False):
+    reg_id = _reg_id_from_name(name)
+
+    return _set_register(ctx, i, reg_id, value, clear, sign_extend)

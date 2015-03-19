@@ -30,6 +30,7 @@ import reil.native as native
 import reil.definitions as reil
 from reil.shorthand import *
 
+import reil.x86.ascii as ascii
 import reil.x86.arithmetic as arithmetic
 import reil.x86.bitwise as bitwise
 import reil.x86.control_flow as control_flow
@@ -41,6 +42,9 @@ import reil.x86.sse as sse
 
 opcode_handlers = {
 
+    capstone.x86.X86_INS_AAA:       ascii.x86_aaa,
+    capstone.x86.X86_INS_AAD:       ascii.x86_aad,
+    capstone.x86.X86_INS_AAS:       ascii.x86_aas,
     capstone.x86.X86_INS_ADC:       arithmetic.x86_adc,
     capstone.x86.X86_INS_ADD:       arithmetic.x86_add,
     capstone.x86.X86_INS_AND:       logic.x86_and,
