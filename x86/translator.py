@@ -27,7 +27,6 @@ the streaming-simd extensions
 import capstone
 
 import reil.native as native
-import reil.definitions as reil
 from reil.shorthand import *
 
 import reil.x86.ascii as ascii
@@ -38,7 +37,7 @@ import reil.x86.logic as logic
 import reil.x86.memory as memory
 import reil.x86.misc as misc
 import reil.x86.sse as sse
-
+import reil.x86.unsupported as unsupported
 
 opcode_handlers = {
 
@@ -47,11 +46,26 @@ opcode_handlers = {
     capstone.x86.X86_INS_AAS:       ascii.x86_aas,
     capstone.x86.X86_INS_ADC:       arithmetic.x86_adc,
     capstone.x86.X86_INS_ADD:       arithmetic.x86_add,
+    capstone.x86.X86_INS_ADDPD:     unsupported.floating_point,
+    capstone.x86.X86_INS_ADDPS:     unsupported.floating_point,
+    capstone.x86.X86_INS_ADDSD:     unsupported.floating_point,
+    capstone.x86.X86_INS_ADDSS:     unsupported.floating_point,
+    capstone.x86.X86_INS_ADDSUBPD:  unsupported.floating_point,
+    capstone.x86.X86_INS_ADDSUBPS:  unsupported.floating_point,
     capstone.x86.X86_INS_AND:       logic.x86_and,
-    capstone.x86.X86_INS_BSWAP:     misc.x86_bswap,
+    capstone.x86.X86_INS_ANDPD:     unsupported.floating_point,
+    capstone.x86.X86_INS_ANDPS:     unsupported.floating_point,
+    capstone.x86.X86_INS_ANDNPD:    unsupported.floating_point,
+    capstone.x86.X86_INS_ANDNPS:    unsupported.floating_point,
+    capstone.x86.X86_INS_ARPL:      misc.x86_arpl,
+    capstone.x86.X86_INS_BOUND:     unsupported.requires_exceptions,
     capstone.x86.X86_INS_BSF:       bitwise.x86_bsf,
     capstone.x86.X86_INS_BSR:       bitwise.x86_bsr,
+    capstone.x86.X86_INS_BSWAP:     misc.x86_bswap,
     capstone.x86.X86_INS_BT:        bitwise.x86_bt,
+    capstone.x86.X86_INS_BTC:       bitwise.x86_btc,
+    capstone.x86.X86_INS_BTR:       bitwise.x86_btr,
+    capstone.x86.X86_INS_BTS:       bitwise.x86_bts,
 
     capstone.x86.X86_INS_CBW:       misc.x86_cbw,
     capstone.x86.X86_INS_CLD:       misc.x86_cld,

@@ -489,6 +489,18 @@ def get_size(ctx, i, index, size=0):
             'Unsupported operand type!')
 
 
+def is_register(ctx, i, index):
+    return i.operands[index].type == capstone.x86.X86_OP_REG
+
+
+def is_immediate(ctx, i, index):
+    return i.operands[index].type == capstone.x86.X86_OP_IMM
+
+
+def is_memory(ctx, i, index):
+    return i.operands[index].type == capstone.x86.X86_OP_MEM
+
+
 def _set_register(ctx, i, reg_id, value, clear=False, sign_extend=False):
 
     low_bytes = {

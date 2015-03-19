@@ -144,15 +144,136 @@ def x86_bsr(ctx, i):
     ctx.emit(  undef_(r('af', 8)))
 
 
-def x86_bt(ctx, i):
-    a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1)
-    bitmask = ctx.tmp(a.size)
-    bit = ctx.tmp(a.size)
+def _read_bit(ctx, i, base_index, offset_index):
+    bit = ctx.tmp(8)
 
-    ctx.emit(  lshl_ (imm(1, a.size), b, bitmask))
-    ctx.emit(  and_  (a, bitmask, bit))
-    ctx.emit(  bisnz_(bit, r('cf', 8)))
+    if operand.is_memory(ctx, i, base_index):
+        # nasty case, indexing into in-memory bitstring; offset can be
+        # > word_size
+
+        base = operand.get_address(ctx, i, base_index)
+        offset = operand.get(ctx, i, offset_index)
+        offset_sign = ctx.tmp(8)
+        byte_offset = ctx.tmp(base.size)
+        tmp0 = ctx.tmp(offset.size)
+        byte = ctx.tmp(8)
+        bitmask = ctx.tmp(8)
+
+        ctx.emit(  and_  (offset, imm(sign_bit(offset.size), offset.size), tmp0))
+        ctx.emit(  bisnz_(tmp0, offset_sign))
+        ctx.emit(  and_  (offset, imm(~sign_bit(offset.size), offset.size), offset))
+        ctx.emit(  div_  (offset, imm(8, offset.size), byte_offset))
+        ctx.emit(  mod_  (offset, imm(8, offset.size), offset))
+
+        ctx.emit(  jcc_  (offset_sign, 'negative_offset'))
+        ctx.emit(  add_  (base, byte_offset, base))
+        ctx.emit(  jcc_  (imm(1, 8), 'base_calculated'))
+
+        ctx.emit('negative_offset')
+        ctx.emit(  sub_  (base, byte_offset, base))
+
+        ctx.emit('base_calculated')
+        ctx.emit(  ldm_  (base, byte))
+        ctx.emit(  lshl_ (imm(1, 8), offset, bitmask))
+        ctx.emit(  and_  (byte, bitmask, byte))
+        ctx.emit(  bisnz_(byte, bit))
+
+    else:
+        # simple case, it's a register
+        a = operand.get(ctx, i, base_index)
+        offset = operand.get(ctx, i, offset_index)
+        bitmask = ctx.tmp(a.size)
+        tmp0 = ctx.tmp(a.size)
+
+        ctx.emit(  lshl_ (imm(1, a.size), offset, bitmask))
+        ctx.emit(  and_  (a, bitmask, tmp0))
+        ctx.emit(  bisnz_(tmp0, bit))
+
+    return bit
+
+
+def _write_bit(ctx, i, base_index, offset_index, bit):
+    if operand.is_memory(ctx, i, base_index):
+        # nasty case, indexing into in-memory bitstring; offset can be
+        # > word_size
+
+        base = operand.get_address(ctx, i, base_index)
+        offset = operand.get(ctx, i, offset_index)
+        offset_sign = ctx.tmp(8)
+        byte_offset = ctx.tmp(base.size)
+        tmp0 = ctx.tmp(offset.size)
+        byte = ctx.tmp(8)
+        bitmask = ctx.tmp(8)
+
+        ctx.emit(  and_  (offset, imm(sign_bit(offset.size), offset.size), tmp0))
+        ctx.emit(  bisnz_(tmp0, offset_sign))
+        ctx.emit(  and_  (offset, imm(~sign_bit(offset.size), offset.size), offset))
+        ctx.emit(  div_  (offset, imm(8, offset.size), byte_offset))
+        ctx.emit(  mod_  (offset, imm(8, offset.size), offset))
+
+        ctx.emit(  jcc_  (offset_sign, 'negative_offset'))
+        ctx.emit(  add_  (base, byte_offset, base))
+        ctx.emit(  jcc_  (imm(1, 8), 'base_calculated'))
+
+        ctx.emit('negative_offset')
+        ctx.emit(  sub_  (base, byte_offset, base))
+
+        ctx.emit('base_calculated')
+        ctx.emit(  ldm_  (base, byte))
+        ctx.emit(  lshl_ (imm(1, 8), offset, bitmask))
+        ctx.emit(  xor_  (bitmask, imm(mask(8), 8), bitmask))
+        ctx.emit(  and_  (byte, bitmask, byte))
+        ctx.emit(  lshl_ (bit, offset, bitmask))
+        ctx.emit(  or_   (byte, bit, byte))
+        ctx.emit(  stm_  (byte, base))
+
+    else:
+        # simple case, it's a register
+        a = operand.get(ctx, i, base_index)
+        offset = operand.get(ctx, i, offset_index)
+        bitmask = ctx.tmp(a.size)
+        tmp0 = ctx.tmp(a.size)
+        tmp1 = ctx.tmp(a.size)
+
+        ctx.emit(  lshl_ (imm(1, a.size), offset, bitmask))
+        ctx.emit(  xor_  (bitmask, imm(mask(a.size), a.size), bitmask))
+        ctx.emit(  and_  (a, bitmask, tmp0))
+        ctx.emit(  str_  (bit, tmp1))
+        ctx.emit(  lshl_ (tmp1, offset, tmp1))
+        ctx.emit(  or_   (tmp0, tmp1, tmp1))
+
+        operand.set(ctx, i, base_index, tmp1)
+
+
+def x86_bt(ctx, i):
+    bit = _read_bit(ctx, i, 0, 1)
+
+    ctx.emit(  str_  (bit, r('cf', 8)))
+
+
+def x86_btc(ctx, i):
+    bit = _read_bit(ctx, i, 0, 1)
+
+    ctx.emit(  str_  (bit, r('cf', 8)))
+    ctx.emit(  bisz_ (bit, bit))
+
+    _write_bit(ctx, i, 0, 1, bit)
+
+
+def x86_btr(ctx, i):
+    bit = _read_bit(ctx, i, 0, 1)
+
+    ctx.emit(  str_  (bit, r('cf', 8)))
+
+    _write_bit(ctx, i, 0, 1, imm(0, 8))
+
+
+def x86_bts(ctx, i):
+    bit = _read_bit(ctx, i, 0, 1)
+
+    ctx.emit(  str_  (bit, r('cf', 8)))
+
+    _write_bit(ctx, i, 0, 1, imm(1, 8))
 
 
 def x86_rol(ctx, i):
@@ -503,4 +624,3 @@ def x86_shrd(ctx, i):
     _shift_set_flags(ctx, result)
 
     operand.set(ctx, i, 0, result)
-

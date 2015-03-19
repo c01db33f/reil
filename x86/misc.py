@@ -65,6 +65,41 @@ def _convert_2(ctx, size):
     ctx.emit(  str_  (result, ctx.accumulator))
 
 
+def x86_arpl(ctx, i):
+
+    dest_seg = operand.get(ctx, i, 0)
+    src_seg = operand.get(ctx, i, 1)
+
+    dest_rpl = ctx.tmp(16)
+    src_rpl = ctx.tmp(16)
+    tmp0 = ctx.tmp(32)
+    tmp1 = ctx.tmp(8)
+    result_seg = ctx.tmp(16)
+    tmp2 = ctx.tmp(16)
+
+    ctx.emit(  lshr_ (dest_seg, imm(14, 8), dest_rpl))
+    ctx.emit(  lshr_ (src_seg, imm(14, 8), src_rpl))
+
+    ctx.emit(  sub_  (dest_seg, src_seg, tmp0))
+    ctx.emit(  and_  (tmp0, imm(sign_bit(32), 32), tmp0))
+    ctx.emit(  bisz_ (tmp0, tmp1))
+    ctx.emit(  jcc_  ('check_passed'))
+    ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+    ctx.emit(  and_  (dest_seg, imm(0b0011111111111111, 16), result_seg))
+    ctx.emit(  and_  (src_seg, imm(0b1100000000000000, 16), tmp2))
+    ctx.emit(  or_   (dest_seg, tmp2, dest_seg))
+
+    operand.set(ctx, i, 0, result_seg)
+
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    ctx.emit('check_passed')
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+
+    ctx.emit('done')
+    ctx.emit(  nop_())
+
+
 def x86_bswap(ctx, i):
     a = operand.get(ctx, i, 0)
 
