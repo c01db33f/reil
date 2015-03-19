@@ -36,12 +36,20 @@ from reil.x86.utilities import *
 
 
 def floating_point(ctx, i):
+    """Instruction not implemented; REIL has no floating-point support."""
+    ctx.emit(  unkn_())
+
+
+def low_level(ctx, i):
+    """Instruction not implemented; it's effects are too low-level."""
     ctx.emit(  unkn_())
 
 
 def privileged(ctx, i):
+    """Instruction not implemented; it requires CPL0."""
     ctx.emit(  unkn_())
 
 
 def requires_exceptions(ctx, i):
+    """Instruction not implemented; it requires processor exceptions to be useful."""
     ctx.emit(  unkn_())
