@@ -71,6 +71,16 @@ def set_pf(ctx, result):
     ctx.emit(  and_  (tmp2, imm(1, 8), r('pf', 8)))
 
 
+def set_sf(ctx, result):
+    """compute sign flag based on size of input result"""
+    ctx.emit(  and_  (result, imm(sign_bit(result.size), result.size), r('sf')))
+
+
+def set_zf(ctx, result):
+    """compute zero flag"""
+    ctx.emit(  bisz_ (result, r('zf')))
+
+
 def unpack(ctx, value, size):
     """Unpack value into components of size."""
 

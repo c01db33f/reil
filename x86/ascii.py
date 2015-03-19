@@ -93,8 +93,8 @@ def x86_aad(ctx, i):
     ctx.emit(  add_  (al, tmp0, tmp0))
     ctx.emit(  str_  (tmp0, result_al))
 
-    ctx.emit(  and_  (result_al, imm(sign_bit(8), 8), r('sf')))
-    ctx.emit(  bisz_ (result_al, r('zf')))
+    set_sf(ctx, result_al)
+    set_zf(ctx, result_al)
     set_pf(ctx, result_al)
 
     ctx.emit(  undef_(r('of', 8)))
@@ -147,3 +147,111 @@ def x86_aas(ctx, i):
 
     operand.set_register(ctx, i, 'al', result_al)
     operand.set_register(ctx, i, 'ah', result_ah)
+
+
+def x86_daa(ctx, i):
+
+    al = operand.get_register(ctx, i, 'al')
+
+    result_al = ctx.tmp(8)
+    tmp0 = ctx.tmp(16)
+    tmp1 = ctx.tmp(8)
+
+    # ((al & 0xf) > 9
+    ctx.emit(  and_  (al, imm(0xf, 8), result_al))
+    ctx.emit(  sub_  (result_al, imm(9, 8), tmp0))
+    ctx.emit(  and_  (tmp0, imm(0xff00, 16), tmp0))
+    ctx.emit(  bisnz_(tmp0, tmp1))
+    #                  || af == 1)
+    ctx.emit(  or_   (tmp1, r('af', 8), tmp1))
+    ctx.emit(  jcc_  (tmp1, 'adjust0'))
+
+    ctx.emit(  str_  (imm(0, 8), r('af', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done0'))
+
+    ctx.emit('adjust0')
+    ctx.emit(  add_  (result_al, imm(6, 8), tmp0))
+    ctx.emit(  str_  (tmp0, result_al))
+    ctx.emit(  str_  (imm(1, 8), r('af', 8)))
+
+    ctx.emit('done0')
+
+    # al > 0x99
+    ctx.emit(  sub_  (al, imm(0x99, 8), tmp0))
+    ctx.emit(  and_  (tmp0, imm(0xff00, 16), tmp0))
+    ctx.emit(  bisnz_(tmp0, tmp1))
+    #           || cf == 1
+    ctx.emit(  or_   (tmp1, r('cf', 8), tmp1))
+    ctx.emit(  jcc_  (tmp1, 'adjust1'))
+
+    ctx.emit(  str_  (imm(0, 8), r('cf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done1'))
+
+    ctx.emit('adjust1')
+    ctx.emit(  add_  (result_al, imm(0x60, 8), tmp0))
+    ctx.emit(  str_  (tmp0, result_al))
+    ctx.emit(  str_  (imm(1, 8), r('cf', 8)))
+
+    ctx.emit('done1')
+
+    set_sf(ctx, result_al)
+    set_zf(ctx, result_al)
+    set_pf(ctx, result_al)
+
+    ctx.emit(  undef_(r('of', 8)))
+
+    operand.set_register(ctx, i, 'al', result_al)
+
+
+def x86_das(ctx, i):
+
+    al = operand.get_register(ctx, i, 'al')
+
+    result_al = ctx.tmp(8)
+    tmp0 = ctx.tmp(16)
+    tmp1 = ctx.tmp(8)
+
+    # ((al & 0xf) > 9
+    ctx.emit(  and_  (al, imm(0xf, 8), result_al))
+    ctx.emit(  sub_  (result_al, imm(9, 8), tmp0))
+    ctx.emit(  and_  (tmp0, imm(0xff00, 16), tmp0))
+    ctx.emit(  bisnz_(tmp0, tmp1))
+    #                  || af == 1)
+    ctx.emit(  or_   (tmp1, r('af', 8), tmp1))
+    ctx.emit(  jcc_  (tmp1, 'adjust0'))
+
+    ctx.emit(  str_  (imm(0, 8), r('af', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done0'))
+
+    ctx.emit('adjust0')
+    ctx.emit(  sub_  (result_al, imm(6, 8), tmp0))
+    ctx.emit(  str_  (tmp0, result_al))
+    ctx.emit(  str_  (imm(1, 8), r('af', 8)))
+
+    ctx.emit('done0')
+
+    # al > 0x99
+    ctx.emit(  sub_  (al, imm(0x99, 8), tmp0))
+    ctx.emit(  and_  (tmp0, imm(0xff00, 16), tmp0))
+    ctx.emit(  bisnz_(tmp0, tmp1))
+    #           || cf == 1
+    ctx.emit(  or_   (tmp1, r('cf', 8), tmp1))
+    ctx.emit(  jcc_  (tmp1, 'adjust1'))
+
+    ctx.emit(  str_  (imm(0, 8), r('cf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done1'))
+
+    ctx.emit('adjust1')
+    ctx.emit(  sub_  (result_al, imm(0x60, 8), tmp0))
+    ctx.emit(  str_  (tmp0, result_al))
+    ctx.emit(  str_  (imm(1, 8), r('cf', 8)))
+
+    ctx.emit('done1')
+
+    set_sf(ctx, result_al)
+    set_zf(ctx, result_al)
+    set_pf(ctx, result_al)
+
+    ctx.emit(  undef_(r('of', 8)))
+
+    operand.set_register(ctx, i, 'al', result_al)

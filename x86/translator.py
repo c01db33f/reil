@@ -136,8 +136,15 @@ opcode_handlers = {
     capstone.x86.X86_INS_CDQ:       misc.x86_cdq,
     capstone.x86.X86_INS_CDQE:      misc.x86_cdqe,
 
-    capstone.x86.X86_INS_DIV:       arithmetic.x86_div,
+    capstone.x86.X86_INS_DAA:       ascii.x86_daa,
+    capstone.x86.X86_INS_DAS:       ascii.x86_das,
     capstone.x86.X86_INS_DEC:       arithmetic.x86_dec,
+    capstone.x86.X86_INS_DIV:       arithmetic.x86_div,
+    capstone.x86.X86_INS_DIVPD:     unsupported.floating_point,
+    capstone.x86.X86_INS_DIVPS:     unsupported.floating_point,
+    capstone.x86.X86_INS_DIVSD:     unsupported.floating_point,
+    capstone.x86.X86_INS_DIVSS:     unsupported.floating_point,
+
     capstone.x86.X86_INS_IDIV:      arithmetic.x86_idiv,
     capstone.x86.X86_INS_IMUL:      arithmetic.x86_imul,
     capstone.x86.X86_INS_INC:       arithmetic.x86_inc,
