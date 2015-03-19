@@ -145,6 +145,9 @@ opcode_handlers = {
     capstone.x86.X86_INS_DIVSD:     unsupported.floating_point,
     capstone.x86.X86_INS_DIVSS:     unsupported.floating_point,
 
+    capstone.x86.X86_INS_EMMS:      unsupported.floating_point,
+    capstone.x86.X86_INS_ENTER:     control_flow.x86_enter,
+
     capstone.x86.X86_INS_IDIV:      arithmetic.x86_idiv,
     capstone.x86.X86_INS_IMUL:      arithmetic.x86_imul,
     capstone.x86.X86_INS_INC:       arithmetic.x86_inc,

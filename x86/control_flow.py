@@ -37,19 +37,50 @@ def conditional_jump(ctx, i, condition):
     ctx.emit(  jcc_   (c, dst))
 
 
-# Instruction Translators
-
-def x86_call(ctx, i):
-    """call procedure"""
-    return_address = i.address + i.size
-    dst = operand.get(ctx, i, 0)
+def _push(ctx, i, value):
+    if value.size != ctx.word_size:
+        prev_value = value
+        value = ctx.tmp(ctx.word_size)
+        ctx.emit(  str_  (prev_value, value))
 
     ctx.emit(  sub_  (ctx.stack_ptr,
                       imm(ctx.word_size // 8, ctx.word_size),
                       ctx.stack_ptr))
 
-    ctx.emit(  stm_  (imm(return_address, ctx.word_size), ctx.stack_ptr))
+    ctx.emit(  stm_  (value, ctx.stack_ptr))
+
+
+# Instruction Translators
+
+def x86_call(ctx, i):
+    """call procedure"""
+    dst = operand.get(ctx, i, 0)
+
+    _push(ctx, i, imm(i.address + i.size, ctx.word_size))
+
     ctx.emit(  jcc_  (imm(1, 8), dst))
+
+
+def x86_enter(ctx, i):
+    size = operand.get(ctx, i, 0)
+    nest = operand.get(ctx, i, 1)
+
+    frame_tmp = ctx.stack_ptr
+
+    _push(ctx, i, ctx.frame_ptr)
+
+    if nest.value > 0:
+        frame_tmp = ctx.tmp(ctx.word_size)
+        ctx.emit(  str_  (ctx.stack_ptr, frame_tmp))
+
+        for i in range(1, nest.value):
+            ctx.emit(  sub_  (ctx.frame_ptr, imm(4, ctx.word_size), ctx.frame_ptr))
+            _push(ctx, i, ctx.frame_ptr)
+
+        _push(frame_tmp)
+
+    ctx.emit(  str_  (frame_tmp, ctx.frame_ptr))
+    ctx.emit(  sub_  (ctx.frame_ptr, size, ctx.stack_ptr))
 
 
 def x86_ja(ctx, i):
