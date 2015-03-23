@@ -89,7 +89,7 @@ opcode_handlers = {
 
     capstone.x86.X86_INS_CALL:              control_flow.x86_call,
     capstone.x86.X86_INS_CBW:               misc.x86_cbw,
-    capstone.x86.X86_INS_CQO:               misc.x86_cqo,
+    capstone.x86.X86_INS_CLAC:              unsupported.privileged,
     capstone.x86.X86_INS_CLC:               misc.x86_clc,
     capstone.x86.X86_INS_CLD:               misc.x86_cld,
     capstone.x86.X86_INS_CLFLUSH:           unsupported.low_level,
@@ -125,11 +125,18 @@ opcode_handlers = {
     # ie CMPEQSD xmm0, xmm1
     # and CMPSS instructions.
 
+    capstone.x86.X86_INS_CMPSS:             unsupported.floating_point,
     capstone.x86.X86_INS_CMPXCHG:           misc.x86_cmpxchg,
     capstone.x86.X86_INS_CMPXCHG8B:         misc.x86_cmpxchg8b,
+    capstone.x86.X86_INS_CMPXCHG16B:        misc.x86_cmpxchg16b,
     capstone.x86.X86_INS_COMISD:            unsupported.floating_point,
     capstone.x86.X86_INS_COMISS:            unsupported.floating_point,
     capstone.x86.X86_INS_CPUID:             misc.x86_cpuid,
+
+    # TODO: this is not *so* complicated, but the bit reflection is unpleasant,
+    # need to work out how to get the right result more efficiently
+
+    capstone.x86.X86_INS_CRC32:             unsupported.complicated,
     capstone.x86.X86_INS_CVTDQ2PD:          unsupported.floating_point,
     capstone.x86.X86_INS_CVTDQ2PS:          unsupported.floating_point,
     capstone.x86.X86_INS_CVTPD2DQ:          unsupported.floating_point,
@@ -150,6 +157,7 @@ opcode_handlers = {
     capstone.x86.X86_INS_CVTTPS2PI:         unsupported.floating_point,
     capstone.x86.X86_INS_CVTTSD2SI:         unsupported.floating_point,
     capstone.x86.X86_INS_CVTTSS2SI:         unsupported.floating_point,
+    capstone.x86.X86_INS_CQO:               misc.x86_cqo,
     capstone.x86.X86_INS_CWD:               misc.x86_cwd,
     capstone.x86.X86_INS_CWDE:              misc.x86_cwde,
     capstone.x86.X86_INS_CDQ:               misc.x86_cdq,

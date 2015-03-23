@@ -222,6 +222,54 @@ def x86_cmpxchg8b(ctx, i):
     ctx.emit(  nop_())
 
 
+def x86_cmpxchg16b(ctx, i):
+    rdx = operand.get_register(ctx, i, 'rdx')
+    rax = operand.get_register(ctx, i, 'rax')
+    rdx_rax = ctx.tmp(128)
+
+    rcx = operand.get_register(ctx, i, 'rcx')
+    rbx = operand.get_register(ctx, i, 'rbx')
+    rcx_rbx = ctx.tmp(128)
+
+    value = operand.get(ctx, i, 0)
+
+    tmp0 = ctx.tmp(128)
+    tmp1 = ctx.tmp(8)
+
+    result_rax = ctx.tmp(64)
+    result_rdx = ctx.tmp(64)
+
+    ctx.emit(  lshl_  (rdx, imm(64, 8), rdx_rax))
+    ctx.emit(  str_   (rax, tmp0))
+    ctx.emit(  or_    (rdx_rax, tmp0, rdx_rax))
+
+    ctx.emit(  equ_  (value, rdx_rax, tmp1))
+    ctx.emit(  jcc_  (tmp1, 'equal'))
+
+    ctx.emit('not-equal')
+    ctx.emit(  str_  (value, result_rax))
+    ctx.emit(  lshr_ (value, imm(64, 8), value))
+    ctx.emit(  str_  (value, result_rdx))
+
+    operand.set_register(ctx, i, 'rdx', result_rdx)
+    operand.set_register(ctx, i, 'rax', result_rax)
+
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    ctx.emit('equal')
+    ctx.emit(  lshl_  (rcx, imm(64, 8), rcx_rbx))
+    ctx.emit(  str_   (rbx, tmp0))
+    ctx.emit(  or_    (rcx_rbx, tmp0, rcx_rbx))
+
+    operand.set(ctx, i, 0, rcx_rbx)
+
+    ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+
+    ctx.emit('done')
+    ctx.emit(  nop_())
+
+
 def x86_cpuid(ctx, i):
     eax = operand.get_register(ctx, i, 'eax')
 
