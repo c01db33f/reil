@@ -74,6 +74,21 @@ def x86_and(ctx, i):
     operand.set(ctx, i, 0, result, clear=True)
 
 
+def x86_andn(ctx, i):
+    a = operand.get(ctx, i, 0)
+    b = operand.get(ctx, i, 1, a.size)
+
+    size = min(a.size, b.size)
+    result = ctx.tmp(size)
+
+    ctx.emit(  xor_  (a, imm(mask(size), size), result))
+    ctx.emit(  and_  (result, b, result))
+
+    _logic_set_flags(ctx, result)
+
+    operand.set(ctx, i, 0, result, clear=True)
+
+
 def x86_not(ctx, i):
     a = operand.get(ctx, i, 0)
 

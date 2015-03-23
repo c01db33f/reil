@@ -54,96 +54,6 @@ def _shift_set_flags(ctx, result):
     set_pf(ctx, result)
 
 
-# Instruction Translators
-
-def x86_bsf(ctx, i):
-    a = operand.get(ctx, i, 1)
-
-    bit = imm(sign_bit(a.size), a.size)
-    index = imm(a.size, a.size)
-
-    bit = ctx.tmp(a.size)
-    index = ctx.tmp(a.size)
-    tmp0 = ctx.tmp(a.size)
-
-    ctx.emit(  jcc_  (a, 'non-zero'))
-
-    # if a is zero
-    ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
-    ctx.emit(  jcc_  (imm(1, 8), 'done'))
-
-    # set up loop variables and clear zf
-    ctx.emit('non-zero')
-    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
-    ctx.emit(  str_  (imm(0, a.size), index))
-    ctx.emit(  str_  (imm(1, a.size), bit))
-
-    # LOOP
-    ctx.emit('loop')
-    ctx.emit(  and_  (a, bit, tmp0))
-    ctx.emit(  jcc_  (tmp0, 'found'))
-
-    # update these for the next one
-    ctx.emit(  add_  (index, imm(1, a.size), index))
-    ctx.emit(  lshl_ (bit, imm(1, a.size), bit))
-    ctx.emit(  jcc_  (imm(1, 8), 'loop'))
-
-    # zero-case epilogue
-    ctx.emit('found')
-    operand.set(ctx, i, 0, index, clear=True)
-
-    ctx.emit('done')
-    ctx.emit(  undef_(r('cf', 8)))
-    ctx.emit(  undef_(r('of', 8)))
-    ctx.emit(  undef_(r('sf', 8)))
-    ctx.emit(  undef_(r('pf', 8)))
-    ctx.emit(  undef_(r('af', 8)))
-
-
-def x86_bsr(ctx, i):
-    a = operand.get(ctx, i, 1)
-
-    bit = imm(sign_bit(a.size), a.size)
-    index = imm(a.size, a.size)
-
-    bit = ctx.tmp(a.size)
-    index = ctx.tmp(a.size)
-    tmp0 = ctx.tmp(a.size)
-
-    ctx.emit(  jcc_  (a, 'non-zero'))
-
-    # if a is zero
-    ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
-    ctx.emit(  jcc_  (imm(1, 8), 'done'))
-
-    # set up loop variables and clear zf
-    ctx.emit('non-zero')
-    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
-    ctx.emit(  str_  (imm(a.size - 1, a.size), index))
-    ctx.emit(  str_  (imm(sign_bit(a.size), a.size), bit))
-
-    # LOOP
-    ctx.emit('loop')
-    ctx.emit(  and_  (a, bit, tmp0))
-    ctx.emit(  jcc_  (tmp0, 'found'))
-
-    # update these for the next one
-    ctx.emit(  sub_  (index, imm(1, a.size), index))
-    ctx.emit(  lshr_ (bit, imm(1, a.size), bit))
-    ctx.emit(  jcc_  (imm(1, 8), 'loop'))
-
-    # zero-case epilogue
-    ctx.emit('found')
-    operand.set(ctx, i, 0, index, clear=True)
-
-    ctx.emit('done')
-    ctx.emit(  undef_(r('cf', 8)))
-    ctx.emit(  undef_(r('of', 8)))
-    ctx.emit(  undef_(r('sf', 8)))
-    ctx.emit(  undef_(r('pf', 8)))
-    ctx.emit(  undef_(r('af', 8)))
-
-
 def _read_bit(ctx, i, base_index, offset_index):
     bit = ctx.tmp(8)
 
@@ -243,6 +153,131 @@ def _write_bit(ctx, i, base_index, offset_index, bit):
         ctx.emit(  or_   (tmp0, tmp1, tmp1))
 
         operand.set(ctx, i, base_index, tmp1)
+
+
+# Instruction Translators
+
+
+def x86_bextr(ctx, i):
+    a = operand.get(ctx, i, 1)
+    b = operand.get(ctx, i, 2)
+
+    start = ctx.tmp(8)
+    length = ctx.tmp(8)
+    mask = ctx.tmp(a.size)
+    tmp0 = ctx.tmp(8)
+    result = ctx.tmp(a.size)
+
+    ctx.emit(  str_  (b, start))
+    ctx.emit(  lshr_ (b, imm(8, 8), length))
+    # we are masking off [11111[start + length , start]111111]
+    ctx.emit(  sub_  (imm(a.size, a.size), length, tmp0))
+    ctx.emit(  lshr_ (imm(mask(a.size), a.size), tmp0, mask))
+    #                    [[start + length, start]111111]
+    ctx.emit(  add_  (tmp0, start, tmp0))
+    ctx.emit(  lshl_ (mask, tmp0, mask))
+    #                    [000000000000[start + length, start]]
+    ctx.emit(  lshr_ (mask, start, mask))
+    # we have our mask   [00000[start + length , start]000000]
+    ctx.emit(  and_  (a, mask, result))
+    ctx.emit(  lshr_ (result, start, result))
+
+    set_zf(ctx, result)
+
+    ctx.emit(  str_  (imm(0, 8), r('cf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+    ctx.emit(  undef_(r('sf', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
+
+    operand.set(ctx, i, 0, result)
+
+
+def x86_bsf(ctx, i):
+    a = operand.get(ctx, i, 1)
+
+    bit = imm(sign_bit(a.size), a.size)
+    index = imm(a.size, a.size)
+
+    bit = ctx.tmp(a.size)
+    index = ctx.tmp(a.size)
+    tmp0 = ctx.tmp(a.size)
+
+    ctx.emit(  jcc_  (a, 'non-zero'))
+
+    # if a is zero
+    ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    # set up loop variables and clear zf
+    ctx.emit('non-zero')
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(0, a.size), index))
+    ctx.emit(  str_  (imm(1, a.size), bit))
+
+    # LOOP
+    ctx.emit('loop')
+    ctx.emit(  and_  (a, bit, tmp0))
+    ctx.emit(  jcc_  (tmp0, 'found'))
+
+    # update these for the next one
+    ctx.emit(  add_  (index, imm(1, a.size), index))
+    ctx.emit(  lshl_ (bit, imm(1, a.size), bit))
+    ctx.emit(  jcc_  (imm(1, 8), 'loop'))
+
+    # zero-case epilogue
+    ctx.emit('found')
+    operand.set(ctx, i, 0, index, clear=True)
+
+    ctx.emit('done')
+    ctx.emit(  undef_(r('cf', 8)))
+    ctx.emit(  undef_(r('of', 8)))
+    ctx.emit(  undef_(r('sf', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+
+
+def x86_bsr(ctx, i):
+    a = operand.get(ctx, i, 1)
+
+    bit = imm(sign_bit(a.size), a.size)
+    index = imm(a.size, a.size)
+
+    bit = ctx.tmp(a.size)
+    index = ctx.tmp(a.size)
+    tmp0 = ctx.tmp(a.size)
+
+    ctx.emit(  jcc_  (a, 'non-zero'))
+
+    # if a is zero
+    ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    # set up loop variables and clear zf
+    ctx.emit('non-zero')
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(a.size - 1, a.size), index))
+    ctx.emit(  str_  (imm(sign_bit(a.size), a.size), bit))
+
+    # LOOP
+    ctx.emit('loop')
+    ctx.emit(  and_  (a, bit, tmp0))
+    ctx.emit(  jcc_  (tmp0, 'found'))
+
+    # update these for the next one
+    ctx.emit(  sub_  (index, imm(1, a.size), index))
+    ctx.emit(  lshr_ (bit, imm(1, a.size), bit))
+    ctx.emit(  jcc_  (imm(1, 8), 'loop'))
+
+    # zero-case epilogue
+    ctx.emit('found')
+    operand.set(ctx, i, 0, index, clear=True)
+
+    ctx.emit('done')
+    ctx.emit(  undef_(r('cf', 8)))
+    ctx.emit(  undef_(r('of', 8)))
+    ctx.emit(  undef_(r('sf', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
 
 
 def x86_bt(ctx, i):
