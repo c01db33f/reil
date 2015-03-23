@@ -141,6 +141,44 @@ def x86_adc(ctx, i):
     operand.set(ctx, i, 0, result)
 
 
+def x86_adcx(ctx, i):
+    a = operand.get(ctx, i, 0)
+    b = operand.get(ctx, i, 1)
+
+    b = _sign_extend(ctx, a, b)
+
+    result = ctx.tmp(a.size * 2)
+    tmp0 = ctx.tmp(a.size * 2)
+
+    ctx.emit(  add_  (a, b, result))
+    ctx.emit(  add_  (result, r('cf', 8), result))
+
+    # only set carry flag
+    ctx.emit(  and_  (result, imm(carry_bit(a.size), result.size), tmp0))
+    ctx.emit(  bisnz_(tmp0, r('cf', 8)))
+
+    operand.set(ctx, i, 0, result)
+
+
+def x86_adox(ctx, i):
+    a = operand.get(ctx, i, 0)
+    b = operand.get(ctx, i, 1)
+
+    b = _sign_extend(ctx, a, b)
+
+    result = ctx.tmp(a.size * 2)
+    tmp0 = ctx.tmp(a.size * 2)
+
+    ctx.emit(  add_  (a, b, result))
+    ctx.emit(  add_  (result, r('of', 8), result))
+
+    # only set carry flag
+    ctx.emit(  and_  (result, imm(carry_bit(a.size), result.size), tmp0))
+    ctx.emit(  bisnz_(tmp0, r('of', 8)))
+
+    operand.set(ctx, i, 0, result)
+
+
 def x86_add(ctx, i):
     a = operand.get(ctx, i, 0)
     b = operand.get(ctx, i, 1)

@@ -35,6 +35,11 @@ import reil.x86.operand as operand
 from reil.x86.utilities import *
 
 
+def complicated(ctx, i):
+    """Instruction not implemented, because it's complicated :-P."""
+    ctx.emit(  unkn_())
+
+
 def floating_point(ctx, i):
     """Instruction not implemented; REIL has no floating-point support."""
     ctx.emit(  unkn_())

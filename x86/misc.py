@@ -245,6 +245,25 @@ def x86_int(ctx, i):
     ctx.emit(  sys_  (imm(0, 8)))
 
 
+def x86_int1(ctx, i):
+    ctx.emit(  sys_  (imm(1, 8)))
+
+
+def x86_int3(ctx, i):
+    ctx.emit(  sys_  (imm(3, 8)))
+
+
+def x86_into(ctx, i):
+    ctx.emit(  jcc_  (r('of', 8), 'do_interrupt'))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    ctx.emit('do_interrupt')
+    ctx.emit(  sys_  (imm(4, 8)))
+
+    ctx.emit('done')
+    ctx.emit(  nop_  ())
+
+
 def x86_nop(ctx, i):
     ctx.emit(  nop_())
 
