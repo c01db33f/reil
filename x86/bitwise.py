@@ -192,6 +192,160 @@ def x86_bextr(ctx, i):
     operand.set(ctx, i, 0, result)
 
 
+def x86_blsi(ctx, i):
+    a = operand.get(ctx, i, 1)
+
+    bit = imm(sign_bit(a.size), a.size)
+    index = imm(a.size, a.size)
+
+    bit = ctx.tmp(a.size)
+    index = ctx.tmp(a.size)
+    result = ctx.tmp(a.size)
+    tmp0 = ctx.tmp(a.size)
+
+    ctx.emit(  jcc_  (a, 'non-zero'))
+
+    # if a is zero
+    ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(0, 8), r('cf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    # set up loop variables and clear zf
+    ctx.emit('non-zero')
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(0, a.size), index))
+    ctx.emit(  str_  (imm(1, a.size), bit))
+
+    # LOOP
+    ctx.emit('loop')
+    ctx.emit(  and_  (a, bit, tmp0))
+    ctx.emit(  jcc_  (tmp0, 'found'))
+
+    # update these for the next one
+    ctx.emit(  add_  (index, imm(1, a.size), index))
+    ctx.emit(  lshl_ (bit, imm(1, a.size), bit))
+    ctx.emit(  jcc_  (imm(1, 8), 'loop'))
+
+    # non-zero case epilogue
+    ctx.emit('found')
+    ctx.emit(  str_  (imm(1, a.size), result))
+    ctx.emit(  lshl_  (result, index, result))
+
+    operand.set(ctx, i, 0, result, clear=True)
+
+    set_sf(ctx, result)
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(1, 8), r('cf', 8)))
+
+    ctx.emit('done')
+    ctx.emit(  str_  (imm(0, 8), r('of', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+
+
+def x86_blsmsk(ctx, i):
+    a = operand.get(ctx, i, 1)
+
+    bit = imm(sign_bit(a.size), a.size)
+    index = imm(a.size, a.size)
+
+    bit = ctx.tmp(a.size)
+    index = ctx.tmp(a.size)
+    result = ctx.tmp(a.size)
+    tmp0 = ctx.tmp(a.size)
+
+    ctx.emit(  jcc_  (a, 'non-zero'))
+
+    # if a is zero
+    ctx.emit(  str_  (imm(0, 8), r('cf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    # set up loop variables and clear zf
+    ctx.emit('non-zero')
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(0, a.size), index))
+    ctx.emit(  str_  (imm(1, a.size), bit))
+
+    # LOOP
+    ctx.emit('loop')
+    ctx.emit(  and_  (a, bit, tmp0))
+    ctx.emit(  jcc_  (tmp0, 'found'))
+
+    # update these for the next one
+    ctx.emit(  add_  (index, imm(1, a.size), index))
+    ctx.emit(  lshl_ (bit, imm(1, a.size), bit))
+    ctx.emit(  jcc_  (imm(1, 8), 'loop'))
+
+    # non-zero case epilogue
+    ctx.emit('found')
+    ctx.emit(  str_  (imm(mask(a.size), a.size), result))
+    ctx.emit(  lshl_ (result, index, result))
+    ctx.emit(  lshr_ (result, index, result))
+    ctx.emit(  xor_  (imm(mask(a.size), a.size), result, result))
+
+    operand.set(ctx, i, 0, result, clear=True)
+
+    set_sf(ctx, result)
+    ctx.emit(  str_  (imm(1, 8), r('cf', 8)))
+
+    ctx.emit('done')
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(0, 8), r('of', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+
+
+def x86_blsr(ctx, i):
+    a = operand.get(ctx, i, 1)
+
+    bit = imm(sign_bit(a.size), a.size)
+    index = imm(a.size, a.size)
+
+    bit = ctx.tmp(a.size)
+    index = ctx.tmp(a.size)
+    result = ctx.tmp(a.size)
+    tmp0 = ctx.tmp(a.size)
+
+    ctx.emit(  jcc_  (a, 'non-zero'))
+
+    # if a is zero
+    ctx.emit(  str_  (imm(1, 8), r('cf', 8)))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    # set up loop variables and clear zf
+    ctx.emit('non-zero')
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(0, a.size), index))
+    ctx.emit(  str_  (imm(1, a.size), bit))
+
+    # LOOP
+    ctx.emit('loop')
+    ctx.emit(  and_  (a, bit, tmp0))
+    ctx.emit(  jcc_  (tmp0, 'found'))
+
+    # update these for the next one
+    ctx.emit(  add_  (index, imm(1, a.size), index))
+    ctx.emit(  lshl_ (bit, imm(1, a.size), bit))
+    ctx.emit(  jcc_  (imm(1, 8), 'loop'))
+
+    # non-zero case epilogue
+    ctx.emit('found')
+    ctx.emit(  str_  (imm(1, a.size), result))
+    ctx.emit(  lshl_ (result, index, result))
+    ctx.emit(  xor_  (a, result, result))
+
+    operand.set(ctx, i, 0, result, clear=True)
+
+    ctx.emit(  str_  (imm(0, 8), r('cf', 8)))
+
+    ctx.emit('done')
+    set_zf(ctx, result)
+    set_sf(ctx, result)
+    ctx.emit(  str_  (imm(0, 8), r('of', 8)))
+    ctx.emit(  undef_(r('pf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+
+
 def x86_bsf(ctx, i):
     a = operand.get(ctx, i, 1)
 
