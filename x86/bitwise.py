@@ -465,6 +465,31 @@ def x86_bts(ctx, i):
     _write_bit(ctx, i, 0, 1, imm(1, 8))
 
 
+def x86_bzhi(ctx, i):
+    a = operand.get(ctx, i, 1)
+    b = operand.get(ctx, i, 2)
+
+    result = ctx.tmp(a.size)
+    index = ctx.tmp(a.size)
+    tmp0 = ctx.tmp(a.size * 2)
+
+    ctx.emit(  mod_  (b, imm(a.size - 1, a.size), index))
+    ctx.emit(  lshl_ (a, index, result))
+    ctx.emit(  lshr_ (result, index, result))
+
+    ctx.emit(  sub_  (b, imm(a.size - 1, a.size), tmp0))
+    ctx.emit(  and_  (tmp0, imm(sign_bit(a.size * 2), a.size * 2), tmp0))
+    ctx.emit(  bisnz_(tmp0, r('cf', 8))
+
+    set_zf(ctx, result)
+    set_pf(ctx, result)
+
+    ctx.emit(  str_  (imm(0, 8), r('of', 8)))
+
+    ctx.emit(  undef_(r('pf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+
+
 def x86_rol(ctx, i):
     a = operand.get(ctx, i, 0)
     b = operand.get(ctx, i, 1)

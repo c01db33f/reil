@@ -85,6 +85,7 @@ opcode_handlers = {
     capstone.x86.X86_INS_BTC:               bitwise.x86_btc,
     capstone.x86.X86_INS_BTR:               bitwise.x86_btr,
     capstone.x86.X86_INS_BTS:               bitwise.x86_bts,
+    capstone.x86.X86_INS_BZHI:              bitwise.x86_bzhi,
 
     capstone.x86.X86_INS_CALL:              control_flow.x86_call,
     capstone.x86.X86_INS_CBW:               misc.x86_cbw,
