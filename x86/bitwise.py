@@ -479,7 +479,7 @@ def x86_bzhi(ctx, i):
 
     ctx.emit(  sub_  (b, imm(a.size - 1, a.size), tmp0))
     ctx.emit(  and_  (tmp0, imm(sign_bit(a.size * 2), a.size * 2), tmp0))
-    ctx.emit(  bisnz_(tmp0, r('cf', 8))
+    ctx.emit(  bisnz_(tmp0, r('cf', 8)))
 
     set_zf(ctx, result)
     set_pf(ctx, result)
