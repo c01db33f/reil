@@ -245,6 +245,54 @@ def x86_leave(ctx, i):
                       ctx.stack_ptr))
 
 
+def x86_lods(ctx, i, size):
+    src = ctx.source
+
+    value = ctx.tmp(size)
+
+    if i.mnemonic.startswith('rep'):
+        rep_prologue(ctx, i)
+
+    ctx.emit(  ldm_  (src, value))
+
+    if size == 8:
+        operand.set_register(ctx, i, 'al', value)
+    elif size == 16:
+        operand.set_register(ctx, i, 'ax', value)
+    elif size == 32:
+        operand.set_register(ctx, i, 'eax', value)
+    else:
+        operand.set_register(ctx, i, 'rax', value)
+
+    ctx.emit(  jcc_  (r('df', 8), 'decrement'))
+    ctx.emit('increment')
+    ctx.emit(  add_  (src, imm(value.size // 8, ctx.word_size), src))
+    ctx.emit(  jcc_  (imm(1, 8), 'set'))
+    ctx.emit('decrement')
+    ctx.emit(  sub_  (src, imm(value.size // 8, ctx.word_size), src))
+    ctx.emit('set')
+    ctx.emit(  str_  (src, ctx.source))
+
+    if i.mnemonic.startswith('rep'):
+        rep_epilogue(ctx, i)
+
+
+def x86_lodsb(ctx, i):
+    x86_lods(ctx, i, 8)
+
+
+def x86_lodsd(ctx, i):
+    x86_lods(ctx, i, 32)
+
+
+def x86_lodsq(ctx, i):
+    x86_lods(ctx, i, 64)
+
+
+def x86_lodsw(ctx, i):
+    x86_lods(ctx, i, 16)
+
+
 def x86_mov(ctx, i):
     size = operand.get_size(ctx, i, 0)
     value = None

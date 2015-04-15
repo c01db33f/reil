@@ -183,6 +183,39 @@ def x86_js(ctx, i):
     conditional_jump(ctx, i, conditional.S)
 
 
+def x86_loop(ctx, i):
+    c = ctx.tmp(8)
+    dst = operand.get(ctx, i, 0)
+
+    ctx.emit(  sub_  (ctx.counter, imm(1, ctx.counter.size), ctx.counter))
+    ctx.emit(  equ_  (ctx.counter, imm(0, ctx.counter.size), c))
+    ctx.emit(  jcc_  (c, dst))
+
+
+def x86_loope(ctx, i):
+    c = conditional.condition(ctx, conditional.E)
+    dst = operand.get(ctx, i, 0)
+
+    tmp0 = ctx.tmp(8)
+
+    ctx.emit(  sub_  (ctx.counter, imm(1, ctx.counter.size), ctx.counter))
+    ctx.emit(  equ_  (ctx.counter, imm(0, ctx.counter.size), tmp0))
+    ctx.emit(  or_   (c, tmp0, c))
+    ctx.emit(  jcc_  (c, dst))
+
+
+def x86_loopne(ctx, i):
+    c = conditional.condition(ctx, conditional.NE)
+    dst = operand.get(ctx, i, 0)
+
+    tmp0 = ctx.tmp(8)
+
+    ctx.emit(  sub_  (ctx.counter, imm(1, ctx.counter.size), ctx.counter))
+    ctx.emit(  equ_  (ctx.counter, imm(0, ctx.counter.size), tmp0))
+    ctx.emit(  or_   (c, tmp0, c))
+    ctx.emit(  jcc_  (c, dst))
+
+
 def x86_ret(ctx, i):
     """return from procedure"""
 

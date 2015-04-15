@@ -312,6 +312,25 @@ def x86_into(ctx, i):
     ctx.emit(  nop_  ())
 
 
+def x86_lahf(ctx, i):
+    result_ah = ctx.tmp(8)
+
+    ctx.emit(  str_  (imm(0, 8), result_ah))
+    ctx.emit(  or_   (r('sf', 8), result_ah))
+    ctx.emit(  lshl_ (result_ah, imm(1, 8), result_ah))
+    ctx.emit(  or_   (r('zf', 8), result_ah))
+    ctx.emit(  lshl_ (result_ah, imm(2, 8), result_ah))
+    ctx.emit(  or_   (r('af', 8), result_ah))
+    ctx.emit(  lshl_ (result_ah, imm(2, 8), result_ah))
+    ctx.emit(  or_   (r('pf', 8), result_ah))
+    ctx.emit(  lshl_ (result_ah, imm(1, 8), result_ah))
+    ctx.emit(  or_   (imm(1, 8), result_ah))
+    ctx.emit(  lshl_ (result_ah, imm(1, 8), result_ah))
+    ctx.emit(  or_   (r('cf', 8), result_ah))
+
+    operand.set_register(ctx, i, 'ah', result_ah)
+
+
 def x86_nop(ctx, i):
     ctx.emit(  nop_())
 

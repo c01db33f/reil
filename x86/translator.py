@@ -298,8 +298,39 @@ opcode_handlers = {
     capstone.x86.X86_INS_JP:                control_flow.x86_jp,
     capstone.x86.X86_INS_JS:                control_flow.x86_js,
 
+    capstone.x86.X86_INS_LAHF:              misc.x86_lahf,
+    capstone.x86.X86_INS_LAR:               unsupported.low_level,
+    capstone.x86.X86_INS_LDDQU:             sse.x86_movdqu,
+    capstone.x86.X86_INS_LDMXCSR:           unsupported.low_level,
+
+    # these fit horribly with the current model of using meta-registers fsbase,
+    # gsbase for segment register access. unlikely to be used in real software
+    # so marking as unsupported for now.
+
+    capstone.x86.X86_INS_LDS:               unsupported.low_level,
+    capstone.x86.X86_INS_LES:               unsupported.low_level,
+    capstone.x86.X86_INS_LFS:               unsupported.low_level,
+    capstone.x86.X86_INS_LGS:               unsupported.low_level,
+    capstone.x86.X86_INS_LSS:               unsupported.low_level,
+
     capstone.x86.X86_INS_LEA:               memory.x86_lea,
     capstone.x86.X86_INS_LEAVE:             memory.x86_leave,
+    capstone.x86.X86_INS_LFENCE:            unsupported.low_level,
+    capstone.x86.X86_INS_LGDT:              unsupported.privileged,
+    capstone.x86.X86_INS_LIDT:              unsupported.privileged,
+    capstone.x86.X86_INS_LLDT:              unsupported.privileged,
+    capstone.x86.X86_INS_LMSW:              unsupported.privileged,
+    capstone.x86.X86_INS_LODSB:             memory.x86_lodsb,
+    capstone.x86.X86_INS_LODSD:             memory.x86_lodsd,
+    capstone.x86.X86_INS_LODSQ:             memory.x86_lodsq,
+    capstone.x86.X86_INS_LODSW:             memory.x86_lodsw,
+    capstone.x86.X86_INS_LOOP:              control_flow.x86_loop,
+    capstone.x86.X86_INS_LOOPE:             control_flow.x86_loope,
+    capstone.x86.X86_INS_LOOPNE:            control_flow.x86_loopne,
+    capstone.x86.X86_INS_LSL:               unsupported.low_level,
+    capstone.x86.X86_INS_LTR:               unsupported.privileged,
+    capstone.x86.X86_INS_LZCNT:             bitwise.x86_lzcnt,
+
     capstone.x86.X86_INS_MOV:               memory.x86_mov,
     capstone.x86.X86_INS_MOVABS:            memory.x86_movabs,
     capstone.x86.X86_INS_MOVAPS:            sse.x86_movaps,

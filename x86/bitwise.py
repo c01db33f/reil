@@ -360,6 +360,7 @@ def x86_bsf(ctx, i):
 
     # if a is zero
     ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+    operand.undefine(ctx, i, 0)
     ctx.emit(  jcc_  (imm(1, 8), 'done'))
 
     # set up loop variables and clear zf
@@ -404,6 +405,7 @@ def x86_bsr(ctx, i):
 
     # if a is zero
     ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+    operand.undefine(ctx, i, 0)
     ctx.emit(  jcc_  (imm(1, 8), 'done'))
 
     # set up loop variables and clear zf
@@ -486,6 +488,51 @@ def x86_bzhi(ctx, i):
 
     ctx.emit(  str_  (imm(0, 8), r('of', 8)))
 
+    ctx.emit(  undef_(r('pf', 8)))
+    ctx.emit(  undef_(r('af', 8)))
+
+
+def x86_lzcnt(ctx, i):
+    a = operand.get(ctx, i, 1)
+
+    bit = imm(1, a.size)
+    index = imm(0, a.size)
+
+    bit = ctx.tmp(a.size)
+    index = ctx.tmp(a.size)
+    tmp0 = ctx.tmp(a.size)
+
+    ctx.emit(  jcc_  (a, 'non-zero'))
+
+    # if a is zero
+    ctx.emit(  str_  (imm(1, 8), r('zf', 8)))
+    operand.set(i, 0, imm(a.size, a.size))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
+
+    # set up loop variables and clear zf
+    ctx.emit('non-zero')
+    ctx.emit(  str_  (imm(0, 8), r('zf', 8)))
+    ctx.emit(  str_  (imm(0, a.size), index))
+    ctx.emit(  str_  (imm(1, a.size), bit))
+
+    # LOOP
+    ctx.emit('loop')
+    ctx.emit(  and_  (a, bit, tmp0))
+    ctx.emit(  jcc_  (tmp0, 'found'))
+
+    # update these for the next one
+    ctx.emit(  add_  (index, imm(1, a.size), index))
+    ctx.emit(  lshr_ (bit, imm(1, a.size), bit))
+    ctx.emit(  jcc_  (imm(1, 8), 'loop'))
+
+    # zero-case epilogue
+    ctx.emit('found')
+    operand.set(ctx, i, 0, index, clear=True)
+
+    ctx.emit('done')
+    ctx.emit(  undef_(r('cf', 8)))
+    ctx.emit(  undef_(r('of', 8)))
+    ctx.emit(  undef_(r('sf', 8)))
     ctx.emit(  undef_(r('pf', 8)))
     ctx.emit(  undef_(r('af', 8)))
 
