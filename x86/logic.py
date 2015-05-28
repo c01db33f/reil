@@ -25,6 +25,7 @@ such as and, or, xor
 
 import reil.error
 from reil.shorthand import *
+from reil.utilities import *
 
 import reil.x86.conditional as conditional
 import reil.x86.operand as operand

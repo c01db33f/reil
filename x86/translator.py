@@ -28,6 +28,7 @@ import capstone
 
 import reil.native as native
 from reil.shorthand import *
+from reil.utilities import *
 
 import reil.x86.ascii as ascii
 import reil.x86.arithmetic as arithmetic

@@ -22,36 +22,7 @@ belong anywhere else.
 
 import reil.definitions as reil
 from reil.shorthand import *
-
-def carry_bit(size):
-    """The mask required for the carry bit on a computation with a
-    result of bit-size 'size'.
-    """
-
-    return 1 << size
-
-
-def sign_bit(size):
-    """The mask required for the sign bit of a value with bit-size
-    'size'.
-    """
-
-    return 1 << (size - 1)
-
-
-def mask(size):
-    """The basic bitmask to extract the value of bit-size 'size'."""
-
-    if size == 8:
-        return 0xff
-    elif size == 16:
-        return 0xffff
-    elif size == 32:
-        return 0xffffffff
-    elif size == 64:
-        return 0xffffffffffffffff
-    elif size == 128:
-        return 0xffffffffffffffffffffffffffffffff
+from reil.utilities import *
 
 
 def set_pf(ctx, result):

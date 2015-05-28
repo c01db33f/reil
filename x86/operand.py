@@ -27,6 +27,7 @@ import capstone
 
 from reil.error import *
 from reil.shorthand import *
+from reil.utilities import *
 
 from reil.x86.utilities import *
 

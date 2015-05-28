@@ -28,6 +28,7 @@ import capstone
 import reil.error
 from reil import *
 from reil.shorthand import *
+from reil.utilities import *
 
 import reil.x86.arithmetic as arithmetic
 import reil.x86.conditional as conditional

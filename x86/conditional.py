@@ -23,6 +23,7 @@ This file contains helpers for x86 conditional instructions
 """
 
 from reil.shorthand import *
+from reil.utilities import *
 
 A    = 0
 AE   = 1
