@@ -73,6 +73,14 @@ def pack(ctx, parts):
     return value
 
 
+def vex_opnds(i):
+    if len(i.operands) == 3:
+        # additional VEX operand
+        return 0, 1, 2
+    else:
+        return 0, 1, 0
+
+
 x86_movaps = memory.x86_mov
 x86_movd = memory.x86_mov
 x86_movdqa = memory.x86_mov
@@ -141,15 +149,7 @@ def x86_palignr(ctx, i):
 
 
 def x86_pand(ctx, i):
-    if len(i.operands) == 3:
-        # additional VEX operand
-        a_id = 0
-        b_id = 1
-        dst_id = 2
-    else:
-        a_id = 0
-        b_id = 1
-        dst_id = 0
+    a_id, b_id, dst_id = vex_opnds(i)
 
     a = operand.get(ctx, i, a_id)
     b = operand.get(ctx, i, b_id)
@@ -165,15 +165,7 @@ def x86_pand(ctx, i):
 
 
 def x86_pandn(ctx, i):
-    if len(i.operands) == 3:
-        # additional VEX operand
-        a_id = 0
-        b_id = 1
-        dst_id = 2
-    else:
-        a_id = 0
-        b_id = 1
-        dst_id = 0
+    a_id, b_id, dst_id = vex_opnds(i)
 
     a = operand.get(ctx, i, a_id)
     b = operand.get(ctx, i, b_id)
@@ -189,38 +181,47 @@ def x86_pandn(ctx, i):
     operand.set(ctx, i, dst_id, value)
 
 
+def x86_pcmpeq(ctx, i, size):
+    a_id, b_id, dst_id = vex_opnds(i)
+
+    a = operand.get(ctx, i, a_id)
+    b = operand.get(ctx, i, b_id)
+
+    a_parts = unpack(ctx, a, size)
+    b_parts = unpack(ctx, b, size)
+
+    dst_parts = []
+    for (a_part, b_part) in zip(a_parts, b_parts):
+        tmp = ctx.tmp(size)
+
+        ctx.emit(  equ_  (a_part, b_part, tmp))
+        ctx.emit(  mul_  (tmp, imm(mask(size), size), tmp))
+
+        dst_parts.append(tmp)
+
+    value = pack(ctx, dst_parts)
+
+    operand.set(ctx, i, dst_id, value)
+
+
 def x86_pcmpeqb(ctx, i):
-    a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1)
+    x86_pcmpeq(ctx, i, 8)
 
-    a_bytes = unpack(ctx, a, 8)
-    b_bytes = unpack(ctx, b, 8)
 
-    bytes = []
-    for (a_byte, b_byte) in zip(a_bytes, b_bytes):
-        tmp0 = ctx.tmp(8)
-        tmp1 = ctx.tmp(8)
+def x86_pcmpeqd(ctx, i):
+    x86_pcmpeq(ctx, i, 32)
 
-        ctx.emit(  equ_  (a_byte, b_byte, tmp0))
-        ctx.emit(  mul_  (tmp0, imm(0xff, 8), tmp1))
 
-        bytes.append(tmp1)
+def x86_pcmpeqq(ctx, i):
+    x86_pcmpeq(ctx, i, 64)
 
-    value = pack(ctx, bytes)
 
-    operand.set(ctx, i, 0, value)
+def x86_pcmpeqw(ctx, i):
+    x86_pcmpeq(ctx, i, 16)
 
 
 def x86_pcmpgt(ctx, i, size):
-    if len(i.operands) == 3:
-        # vpcmpgt* with additional VEX operand
-        a_id = 0
-        b_id = 1
-        dst_id = 2
-    else:
-        a_id = 0
-        b_id = 1
-        dst_id = 0
+    a_id, b_id, dst_id = vex_opnds(i)
 
     a = operand.get(ctx, i, a_id)
     b = operand.get(ctx, i, b_id)
@@ -320,15 +321,7 @@ def x86_pmovmskb(ctx, i):
 
 
 def x86_por(ctx, i):
-    if len(i.operands) == 3:
-        # additional VEX operand
-        a_id = 0
-        b_id = 1
-        dst_id = 2
-    else:
-        a_id = 0
-        b_id = 1
-        dst_id = 0
+    a_id, b_id, dst_id = vex_opnds(i)
 
     a = operand.get(ctx, i, a_id)
     b = operand.get(ctx, i, b_id)
@@ -469,15 +462,7 @@ def x86_punpcklqdq(ctx, i):
 
 
 def x86_pxor(ctx, i):
-    if len(i.operands) == 3:
-        # additional VEX operand
-        a_id = 0
-        b_id = 1
-        dst_id = 2
-    else:
-        a_id = 0
-        b_id = 1
-        dst_id = 0
+    a_id, b_id, dst_id = vex_opnds(i)
 
     a = operand.get(ctx, i, a_id)
     b = operand.get(ctx, i, b_id)
