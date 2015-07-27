@@ -383,8 +383,10 @@ def x86_pslldq(ctx, i):
 
 
 def _x86_psub(ctx, i, part_size):
-    a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1)
+    a_id, b_id, dst_id = vex_opnds(i)
+
+    a = operand.get(ctx, i, a_id)
+    b = operand.get(ctx, i, b_id)
 
     size = min(a.size, b.size)
     part_count = size // part_size
@@ -403,7 +405,7 @@ def _x86_psub(ctx, i, part_size):
 
     value = pack(ctx, parts)
 
-    operand.set(ctx, i, 0, value)
+    operand.set(ctx, i, dst_id, value)
 
 
 def x86_psubb(ctx, i):
