@@ -542,7 +542,7 @@ def x86_rol(ctx, i):
     a = operand.get(ctx, i, 0)
     b = operand.get(ctx, i, 1)
 
-    max_shift = ctx.word_size-1
+    max_shift = a.size-1
 
     size = a.size
     tmp0 = ctx.tmp(size)
@@ -602,7 +602,7 @@ def x86_ror(ctx, i):
     a = operand.get(ctx, i, 0)
     b = operand.get(ctx, i, 1)
 
-    max_shift = ctx.word_size-1
+    max_shift = a.size-1
 
     size = a.size
     tmp0 = ctx.tmp(size)
