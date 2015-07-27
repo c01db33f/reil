@@ -140,6 +140,30 @@ def x86_palignr(ctx, i):
     operand.set(ctx, i, 0, result)
 
 
+def x86_pand(ctx, i):
+    if len(i.operands) == 3:
+        # additional VEX operand
+        a_id = 0
+        b_id = 1
+        dst_id = 2
+    else:
+        a_id = 0
+        b_id = 1
+        dst_id = 0
+
+    a = operand.get(ctx, i, a_id)
+    b = operand.get(ctx, i, b_id)
+    value = ctx.tmp(a.size)
+
+    ctx.emit(  and_  (a, b, value))
+
+    # TODO: this will clear all the remaining bits of the destination register,
+    # which is incorrect for the legacy sse version. When ymmX register support
+    # is added, this will be broken.
+
+    operand.set(ctx, i, dst_id, value)
+
+
 def x86_pandn(ctx, i):
     if len(i.operands) == 3:
         # additional VEX operand
