@@ -320,15 +320,27 @@ def x86_pmovmskb(ctx, i):
 
 
 def x86_por(ctx, i):
-    a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1)
+    if len(i.operands) == 3:
+        # additional VEX operand
+        a_id = 0
+        b_id = 1
+        dst_id = 2
+    else:
+        a_id = 0
+        b_id = 1
+        dst_id = 0
 
-    size = min(a.size, b.size)
-    value = ctx.tmp(size)
+    a = operand.get(ctx, i, a_id)
+    b = operand.get(ctx, i, b_id)
+    value = ctx.tmp(a.size)
 
     ctx.emit(  or_  (a, b, value))
 
-    operand.set(ctx, i, 0, value)
+    # TODO: this will clear all the remaining bits of the destination register,
+    # which is incorrect for the legacy sse version. When ymmX register support
+    # is added, this will be broken.
+
+    operand.set(ctx, i, dst_id, value)
 
 
 def x86_pshufd(ctx, i):
@@ -457,12 +469,24 @@ def x86_punpcklqdq(ctx, i):
 
 
 def x86_pxor(ctx, i):
-    a = operand.get(ctx, i, 0)
-    b = operand.get(ctx, i, 1)
+    if len(i.operands) == 3:
+        # additional VEX operand
+        a_id = 0
+        b_id = 1
+        dst_id = 2
+    else:
+        a_id = 0
+        b_id = 1
+        dst_id = 0
 
-    size = min(a.size, b.size)
-    value = ctx.tmp(size)
+    a = operand.get(ctx, i, a_id)
+    b = operand.get(ctx, i, b_id)
+    value = ctx.tmp(a.size)
 
     ctx.emit(  xor_  (a, b, value))
 
-    operand.set(ctx, i, 0, value)
+    # TODO: this will clear all the remaining bits of the destination register,
+    # which is incorrect for the legacy sse version. When ymmX register support
+    # is added, this will be broken.
+
+    operand.set(ctx, i, dst_id, value)

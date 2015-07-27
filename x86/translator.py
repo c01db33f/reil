@@ -424,6 +424,8 @@ opcode_handlers = {
     capstone.x86.X86_INS_VPCMPGTW:          sse.x86_pcmpgtw,
     capstone.x86.X86_INS_VMOVDQA:           sse.x86_movdqa,
     capstone.x86.X86_INS_VMOVDQU:           sse.x86_movdqu,
+    capstone.x86.X86_INS_VPOR:              sse.x86_por,
+    capstone.x86.X86_INS_VPXOR:             sse.x86_pxor,
     capstone.x86.X86_INS_XCHG:              misc.x86_xchg,
     capstone.x86.X86_INS_XOR:               logic.x86_xor,
 }
