@@ -162,6 +162,90 @@ def x86_pcmpeqb(ctx, i):
     operand.set(ctx, i, 0, value)
 
 
+def x86_pcmpgt(ctx, i, size):
+    if len(i.operands) == 3:
+        # vpcmpgt* with additional VEX operand
+        a_id = 0
+        b_id = 1
+        dst_id = 2
+    else:
+        a_id = 0
+        b_id = 1
+        dst_id = 0
+
+    a = operand.get(ctx, i, a_id)
+    b = operand.get(ctx, i, b_id)
+
+    a_parts = unpack(ctx, a, size)
+    b_parts = unpack(ctx, b, size)
+
+    a_sign = ctx.tmp(size)
+    a_abs = ctx.tmp(size)
+    b_sign = ctx.tmp(size)
+    b_abs = ctx.tmp(size)
+
+    tmp0 = ctx.tmp(size * 2)
+    a_abs_lt_b_abs = ctx.tmp(8)
+    tmp1 = ctx.tmp(size)
+    a_b_same_sign = ctx.tmp(8)
+    a_neg = ctx.tmp(8)
+    b_nonneg = ctx.tmp(8)
+    a_neg_and_b_nonneg = ctx.tmp(8)
+    cond = ctx.tmp(8)
+
+    dst_parts = []
+    for a_part, b_part in zip(a_parts, b_parts):
+        dst_part = ctx.tmp(size)
+
+        ctx.emit(  and_  (a_part, imm(sign_bit(size), size), a_sign))
+        ctx.emit(  and_  (a_part, imm(~sign_bit(size), size), a_abs))
+        ctx.emit(  and_  (b_part, imm(sign_bit(size), size), b_sign))
+        ctx.emit(  and_  (b_part, imm(~sign_bit(size), size), b_abs))
+
+        # a < b <==> (|a| < |b| and sign(a) == sign(b)) or (a < 0 and b >= 0)
+
+        # |a| < |b|
+        ctx.emit(  sub_  (a_abs, b_abs, tmp0))
+        ctx.emit(  and_  (tmp0, imm(sign_bit(size * 2), size * 2), tmp0))
+        ctx.emit(  bisz_ (tmp0, a_abs_lt_b_abs))
+
+        # sign(a) == sign(b)
+        ctx.emit(  xor_  (a_sign, b_sign, tmp1))
+        ctx.emit(  bisz_ (tmp1, a_b_same_sign))
+
+        # a < 0 and b >= 0
+        ctx.emit(  bisnz_(a_sign, a_neg))
+        ctx.emit(  bisz_ (b_sign, b_nonneg))
+        ctx.emit(  and_  (a_neg, b_nonneg, a_neg_and_b_nonneg))
+
+        ctx.emit(  and_  (a_abs_lt_b_abs, a_b_same_sign, cond))
+        ctx.emit(  or_   (cond, a_neg_and_b_nonneg, cond))
+        ctx.emit(  mul_  (cond, imm(mask(size), size), dst_part))
+
+        dst_parts.append(dst_part)
+
+
+    value = pack(ctx, dst_parts)
+
+    operand.set(ctx, i, dst_id, value)
+
+
+def x86_pcmpgtb(ctx, i):
+    x86_pcmpgt(ctx, i, 8)
+
+
+def x86_pcmpgtd(ctx, i):
+    x86_pcmpgt(ctx, i, 32)
+
+
+def x86_pcmpgtq(ctx, i):
+    x86_pcmpgt(ctx, i, 64)
+
+
+def x86_pcmpgtw(ctx, i):
+    x86_pcmpgt(ctx, i, 16)
+
+
 def x86_pmovmskb(ctx, i):
     a = operand.get(ctx, i, 1)
     a_bytes = unpack(ctx, a, 8)
