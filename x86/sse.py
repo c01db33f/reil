@@ -430,6 +430,19 @@ def x86_pslldq(ctx, i):
     operand.set(ctx, i, 0, result)
 
 
+def x86_psrldq(ctx, i):
+    a = operand.get(ctx, i, 0)
+    b = operand.get(ctx, i, 1)
+    result = ctx.tmp(a.size)
+
+    shift = min(b.value, 16)
+
+    # right shift by the correct amount
+    ctx.emit(  lshr_ (a, imm(shift * 8, 8), result))
+
+    operand.set(ctx, i, 0, result)
+
+
 def _x86_psub(ctx, i, part_size):
     a_id, b_id, dst_id = vex_opnds(i)
 

@@ -373,6 +373,7 @@ opcode_handlers = {
     capstone.x86.X86_INS_POR:               sse.x86_por,
     capstone.x86.X86_INS_PSHUFD:            sse.x86_pshufd,
     capstone.x86.X86_INS_PSLLDQ:            sse.x86_pslldq,
+    capstone.x86.X86_INS_PSRLDQ:            sse.x86_psrldq,
     capstone.x86.X86_INS_PSUBB:             sse.x86_psubb,
     capstone.x86.X86_INS_PSUBW:             sse.x86_psubw,
     capstone.x86.X86_INS_PSUBD:             sse.x86_psubd,
