@@ -568,6 +568,25 @@ def _set_register(ctx, i, reg_id, value, clear=False, sign_extend=False):
         capstone.x86.X86_REG_R15D:r('r15', 64),
     }
 
+    sse_regs = {
+        capstone.x86.X86_REG_XMM0:r('xmm0', 128),
+        capstone.x86.X86_REG_XMM1:r('xmm1', 128),
+        capstone.x86.X86_REG_XMM2:r('xmm2', 128),
+        capstone.x86.X86_REG_XMM3:r('xmm3', 128),
+        capstone.x86.X86_REG_XMM4:r('xmm4', 128),
+        capstone.x86.X86_REG_XMM5:r('xmm5', 128),
+        capstone.x86.X86_REG_XMM6:r('xmm6', 128),
+        capstone.x86.X86_REG_XMM7:r('xmm7', 128),
+        capstone.x86.X86_REG_XMM8:r('xmm8', 128),
+        capstone.x86.X86_REG_XMM9:r('xmm9', 128),
+        capstone.x86.X86_REG_XMM10:r('xmm10', 128),
+        capstone.x86.X86_REG_XMM11:r('xmm11', 128),
+        capstone.x86.X86_REG_XMM12:r('xmm12', 128),
+        capstone.x86.X86_REG_XMM13:r('xmm13', 128),
+        capstone.x86.X86_REG_XMM14:r('xmm14', 128),
+        capstone.x86.X86_REG_XMM15:r('xmm15', 128),
+    }
+
     def truncate_value(value, size):
 
         if value.size > size:
@@ -611,12 +630,25 @@ def _set_register(ctx, i, reg_id, value, clear=False, sign_extend=False):
 
     # 32-bit low parts
     elif reg_id in low_dwords:
+        # NB: this code is only reached in x86_64 mode.
+
+        # CF: Intel Manual... 32-bit operands generate a 32-bit result,
+        # zero-extended to a 64-bit result in the destination register.
+
         reg = low_dwords[reg_id]
-        set_mask = imm(~mask(32), reg.size)
+        set_mask = imm(mask(64), reg.size)
         value = truncate_value(value, 32)
+        clear = True
 
     else:
         raise TranslationError('Unsupported register!')
+
+    if reg_id in sse_regs:
+      # NB: We make the default behaviour for setting a smaller value to an SSE
+      # register to zero-extend. Code in SSE implementation will have to expect
+      # this... But it makes implementation of the memory moves for SSE simpler.
+      sign_extend = False
+      clear = True
 
     if value.size > reg.size:
         value = truncate_value(value, reg.size)
@@ -633,8 +665,9 @@ def _set_register(ctx, i, reg_id, value, clear=False, sign_extend=False):
         else:
             tmp0 = ctx.tmp(reg.size)
 
+            ctx.emit(  str_  (prev_value, value))
             ctx.emit(  and_  (reg, set_mask, tmp0))
-            ctx.emit(  or_   (tmp0, prev_value, value))
+            ctx.emit(  or_   (tmp0, value, value))
 
     ctx.emit(  str_  (value, reg))
 
