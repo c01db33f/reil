@@ -603,17 +603,23 @@ class X86_64TranslationContext(TranslationContext):
         self.disassembler.detail = True
 
 
-#_x86_ctx = X86TranslationContext()
-#_x86_64_ctx = X86_64TranslationContext()
+_x86_ctx = X86TranslationContext()
+_x86_64_ctx = X86_64TranslationContext()
 
 
-def translate(code_bytes, base_address, x86_64=False):
+def translate(code_bytes, base_address, x86_64=False, threadsafe=True):
     done = False
 
     if x86_64:
-        ctx = X86_64TranslationContext()
+        if threadsafe:
+            ctx = X86_64TranslationContext()
+        else:
+            ctx = _x86_64_ctx
     else:
-        ctx = X86TranslationContext()
+        if threadsafe:
+            ctx = X86TranslationContext()
+        else:
+            ctx = _x86_ctx
 
     for i in ctx.disassembler.disasm(code_bytes, base_address):
 
