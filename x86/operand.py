@@ -646,7 +646,7 @@ def _set_register(ctx, i, reg_id, value, clear=False, sign_extend=False):
     if reg_id in sse_regs:
       # NB: We make the default behaviour for setting a smaller value to an SSE
       # register to zero-extend. Code in SSE implementation will have to expect
-      # this... But it makes implementation of the memory moves for SSE simpler.
+      # this... But it makes implementation of the memory moves for SSE simpler
       sign_extend = False
       clear = True
 

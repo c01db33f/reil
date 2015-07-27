@@ -302,6 +302,9 @@ def x86_mov(ctx, i):
     if len(i.operands) == 1:
         # source is the accumulator
         value = ctx.accumulator
+
+        if i.operands[0].type == capstone.x86.X86_OP_REG:
+            clear = False
     else:
         value = operand.get(ctx, i, 1, size=size)
 
@@ -311,9 +314,9 @@ def x86_mov(ctx, i):
 
     # Oh x86 how I hate you
     if i.operands[1].type == capstone.x86.X86_OP_MEM and operand.get_size(ctx, i, 1) != 32:
-        operand.set(ctx, i, 0, value)
-    else:
-        operand.set(ctx, i, 0, value, clear=True, sign_extend=False)
+        clear = False
+
+    operand.set(ctx, i, 0, value, clear=clear)
 
 
 def x86_movabs(ctx, i):
@@ -321,6 +324,13 @@ def x86_movabs(ctx, i):
 
 
 def x86_movs(ctx, i, size):
+    # This is to handle the mnemonic overload (SSE movsd) for 'move scalar
+    # double-precision floating-point value' since capstone doesn't
+    # distinguish. That instruction is just a mov into/from the SSE
+    # registers.
+    if len(i.operands) >= 0:
+        return x86_mov(ctx, i)
+
     a = ctx.destination
     b = ctx.source
 
