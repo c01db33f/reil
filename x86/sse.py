@@ -76,7 +76,7 @@ def pack(ctx, parts):
 def vex_opnds(i):
     if len(i.operands) == 3:
         # additional VEX operand
-        return 0, 1, 2
+        return 2, 1, 0
     else:
         return 0, 1, 0
 
