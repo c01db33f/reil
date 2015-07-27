@@ -310,7 +310,7 @@ def x86_pminu(ctx, i, size):
 
     dst_parts = []
     for a_part, b_part in zip(a_parts, b_parts):
-        dst_byte = ctx.tmp(size)
+        dst_part = ctx.tmp(size)
 
         ctx.emit(  sub_  (a_part, b_part, tmp0))
         ctx.emit(  and_  (tmp0, imm(sign_bit(size * 2), size * 2), tmp0))
@@ -319,7 +319,7 @@ def x86_pminu(ctx, i, size):
         ctx.emit(  xor_  (tmp1, imm(1, size * 2), tmp1))
         ctx.emit(  mul_  (b_part, tmp1, tmp1))
         ctx.emit(  add_  (tmp0, tmp1, tmp0))
-        ctx.emit(  str_  (tmp0, dst_byte))
+        ctx.emit(  str_  (tmp0, dst_part))
 
         dst_parts.append(dst_part)
 
