@@ -675,7 +675,7 @@ def set_register(ctx, i, name, value, clear=False, sign_extend=False):
     return _set_register(ctx, i, reg_id, value, clear, sign_extend)
 
 
-def _undef_register(ctx, i, reg_id, value, clear=False, sign_extend=False):
+def _undef_register(ctx, i, reg_id, clear=False, sign_extend=False):
 
     low_bytes = {
         capstone.x86.X86_REG_AL:ctx.accumulator,
