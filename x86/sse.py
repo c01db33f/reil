@@ -296,7 +296,7 @@ def x86_pcmpgtw(ctx, i):
     x86_pcmpgt(ctx, i, 16)
 
 
-def x86_pminu(ctx, i, size):
+def x86_pmaxu(ctx, i, size):
     a_id, b_id, dst_id = vex_opnds(i)
 
     a = operand.get(ctx, i, a_id)
@@ -318,6 +318,54 @@ def x86_pminu(ctx, i, size):
         ctx.emit(  mul_  (a_part, tmp1, tmp0))
         ctx.emit(  xor_  (tmp1, imm(1, size * 2), tmp1))
         ctx.emit(  mul_  (b_part, tmp1, tmp1))
+        ctx.emit(  add_  (tmp0, tmp1, tmp0))
+        ctx.emit(  str_  (tmp0, dst_part))
+
+        dst_parts.append(dst_part)
+
+    value = pack(ctx, dst_parts)
+
+    operand.set(ctx, i, dst_id, value)
+
+
+def x86_pmaxub(ctx, i):
+    x86_pmaxu(ctx, i, 8)
+
+
+def x86_pmaxud(ctx, i):
+    x86_pmaxu(ctx, i, 32)
+
+
+def x86_pmaxuq(ctx, i):
+    x86_pmaxu(ctx, i, 64)
+
+
+def x86_pmaxuw(ctx, i):
+    x86_pmaxu(ctx, i, 16)
+
+
+def x86_pminu(ctx, i, size):
+    a_id, b_id, dst_id = vex_opnds(i)
+
+    a = operand.get(ctx, i, a_id)
+    b = operand.get(ctx, i, b_id)
+
+    a_parts = unpack(ctx, a, size)
+    b_parts = unpack(ctx, b, size)
+
+    tmp0 = ctx.tmp(size * 2)
+    tmp1 = ctx.tmp(size * 2)
+
+    dst_parts = []
+    for a_part, b_part in zip(a_parts, b_parts):
+        dst_part = ctx.tmp(size)
+
+        ctx.emit(  sub_  (a_part, b_part, tmp0))
+        ctx.emit(  and_  (tmp0, imm(sign_bit(size * 2), size * 2), tmp0))
+        ctx.emit(  bisz_ (tmp0, tmp1))
+        ctx.emit(  mul_  (b_part, tmp1, tmp0))
+        ctx.emit(  xor_  (tmp1, imm(1, size * 2), tmp1))
+        ctx.emit(  mul_  (a_part, tmp1, tmp1))
         ctx.emit(  add_  (tmp0, tmp1, tmp0))
         ctx.emit(  str_  (tmp0, dst_part))
 
