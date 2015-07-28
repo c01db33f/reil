@@ -72,7 +72,7 @@ def x86_and(ctx, i):
 
     _logic_set_flags(ctx, result)
 
-    operand.set(ctx, i, 0, result, clear=True)
+    operand.set(ctx, i, 0, result)
 
 
 def x86_andn(ctx, i):
@@ -87,7 +87,7 @@ def x86_andn(ctx, i):
 
     _logic_set_flags(ctx, result)
 
-    operand.set(ctx, i, 0, result, clear=True)
+    operand.set(ctx, i, 0, result)
 
 
 def x86_not(ctx, i):
@@ -138,4 +138,4 @@ def x86_xor(ctx, i):
 
     _logic_set_flags(ctx, result)
 
-    operand.set(ctx, i, 0, result, clear=True)
+    operand.set(ctx, i, 0, result)
