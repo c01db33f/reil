@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright 2014 Mark Brand - c01db33f (at) gmail.com
+#    Copyright 2016 Mark Brand - c01db33f (at) gmail.com
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-"""reil.arm.arithmetic - ARMv7 and Thumbv2 translators
+"""reil.arm64.memory - ARMv8 translators
 
 This module generates REIL (reverse engineering intermediate language)
-IL from ARMv7 and Thumbv2 machine code.
+IL from ARMv8 machine code.
 
-This file is responsible for translation of basic arithmetic instructions
-such as add, mul, div
+This file is responsible for translation of memory access instructions
+such as stm, ldm
 """
 
 import reil.error
@@ -28,36 +28,21 @@ from reil import *
 from reil.shorthand import *
 from reil.utilities import *
 
-import reil.arm.operand as operand
-
-def arm_add(ctx, i):
-    if len(i.operands) == 3:
-        dst_idx = 0
-        a_idx = 1
-        b_idx = 2
-    else:
-        dst_idx = 0
-        a_idx = 0
-        b_idx = 1
-
-    a = operand.get(ctx, i, a_idx)
-    b = operand.get(ctx, i, b_idx)
-
-    result = ctx.tmp(a.size * 2)
-
-    ctx.emit(  add_  (a, b, result))
-
-    if i.update_flags:
-        raise NotImplementedError()
-
-    operand.set(ctx, i, dst_idx, result)
+import reil.arm64.operand as operand
 
 
-def arm_sub(ctx, i):
+def arm64_mov(ctx, i):
+    value = operand.get(ctx, i, 1)
+    operand.set(ctx, i, 0, value, i.writeback)
+
+
+def arm64_stp(ctx, i):
     a = operand.get(ctx, i, 0)
     b = operand.get(ctx, i, 1)
-    
-    print i.update_flags
-    
-    print dir(i)
 
+    value = ctx.tmp(a.size + b.size)
+    ctx.emit(  str_  (a, value))
+    ctx.emit(  lshl_ (value, b.size, value))
+    ctx.emit(  or_   (b, value, value))
+
+    operand.set(ctx, i, 2, value, i.writeback)

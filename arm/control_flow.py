@@ -31,6 +31,11 @@ from reil.utilities import *
 import reil.arm.operand as operand
 
 
+def arm_b(ctx, i):
+    target = operand.get(ctx, i, 0)
+    ctx.emit(  jcc_  (imm(1, 8), target))
+
+
 def arm_blx(ctx, i):
     target = operand.get(ctx, i, 0)
 

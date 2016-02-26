@@ -29,17 +29,21 @@ from reil.shorthand import *
 import reil.arm.arithmetic as arithmetic
 import reil.arm.control_flow as control_flow
 import reil.arm.memory as memory
+import reil.arm.privileged as privileged
 
 opcode_handlers = {
   capstone.arm.ARM_INS_ADD:  arithmetic.arm_add,
+  capstone.arm.ARM_INS_B:    control_flow.arm_b,
   capstone.arm.ARM_INS_BLX:  control_flow.arm_blx,
+  capstone.arm.ARM_INS_CMP:  arithmetic.arm_sub,
   capstone.arm.ARM_INS_MOV:  memory.arm_mov,
   capstone.arm.ARM_INS_MOVT: memory.arm_movt,
   capstone.arm.ARM_INS_MOVW: memory.arm_movw,
+  capstone.arm.ARM_INS_MSR:  privileged.arm_msr,
   capstone.arm.ARM_INS_PUSH: memory.arm_push,
   capstone.arm.ARM_INS_STR:  memory.arm_str,
+  capstone.arm.ARM_INS_SUB:  arithmetic.arm_sub,
 }
-
 
 def process_labels(ris):
     labels = dict()
@@ -186,7 +190,6 @@ class ThumbTranslationContext(TranslationContext):
         self.program_ctr = self.registers[capstone.arm.ARM_REG_R15]
         self.disassembler = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB)
         self.disassembler.detail = True
-
 
 
 def translate(code_bytes, base_address, thumb=False):

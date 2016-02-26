@@ -72,10 +72,8 @@ def arm_movt(ctx, i):
     operand.set(ctx, i, 0, result)
 
 
-
 def arm_movw(ctx, i):
     _arm_mov(ctx, i)
-
 
 
 def arm_push(ctx, i):
@@ -94,7 +92,7 @@ def arm_push(ctx, i):
         ctx.emit(  stm_  (value, ctx.stack_ptr))
 
 
-def arm_str(ctx, i):
+def arm_stm(ctx, i):
     value = operand.get(ctx, i, 0)
     address = operand.get(ctx, i, 1)
 
@@ -102,4 +100,9 @@ def arm_str(ctx, i):
 
     if i.writeback:
         operand.writeback(ctx, i, 1)
+
+
+def arm_str(ctx, i):
+    value = operand.get(ctx, i, 1)
+    operand.set(ctx, i, 0, value)
 
