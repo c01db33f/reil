@@ -203,6 +203,14 @@ def _get_memory_size(ctx, i, opnd):
 
 
 def _get_register(ctx, i, reg):
+    # we need to handle rip first to shortcut native register handling.
+    if reg == capstone.x86.X86_REG_RIP and not ctx.use_rip:
+        qword_reg = ctx.tmp(64)
+
+        ctx.emit(  str_  (imm(i.address + i.size, 64), qword_reg))
+
+        return qword_reg
+
     # full native registers
     if reg in ctx.registers:
         return ctx.registers[reg]
@@ -306,13 +314,6 @@ def _get_register(ctx, i, reg):
         ctx.emit(  str_  (low_dwords[reg], dword_reg))
 
         return dword_reg
-
-    if reg == capstone.x86.X86_REG_RIP:
-        qword_reg = ctx.tmp(64)
-
-        ctx.emit(  str_  (imm(i.address + i.size, 64), qword_reg))
-
-        return qword_reg
 
     raise TranslationError('Unsupported register!')
 

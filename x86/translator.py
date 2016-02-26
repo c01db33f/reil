@@ -453,6 +453,7 @@ opcode_handlers = {
     capstone.x86.X86_INS_VMOVDQU:           sse.x86_movdqu,
     capstone.x86.X86_INS_VPOR:              sse.x86_por,
     capstone.x86.X86_INS_VPXOR:             sse.x86_pxor,
+    capstone.x86.X86_INS_XADD:              arithmetic.x86_xadd,
     capstone.x86.X86_INS_XCHG:              misc.x86_xchg,
     capstone.x86.X86_INS_XOR:               logic.x86_xor,
 }
@@ -588,7 +589,7 @@ class X86TranslationContext(TranslationContext):
 
 class X86_64TranslationContext(TranslationContext):
 
-    def __init__(self):
+    def __init__(self, use_rip=False):
         TranslationContext.__init__(self)
 
         self.registers = {
@@ -608,7 +609,7 @@ class X86_64TranslationContext(TranslationContext):
             capstone.x86.X86_REG_R13:   r('r13', 64),
             capstone.x86.X86_REG_R14:   r('r14', 64),
             capstone.x86.X86_REG_R15:   r('r15', 64),
-            #capstone.x86.X86_REG_RIP:   r('rip', 64),
+            capstone.x86.X86_REG_RIP:   r('rip', 64),
 
             capstone.x86.X86_REG_FS:    r('fsbase', 64),
             capstone.x86.X86_REG_GS:    r('gsbase', 64),
@@ -642,20 +643,24 @@ class X86_64TranslationContext(TranslationContext):
         self.stack_ptr = self.registers[capstone.x86.X86_REG_RSP]
         self.disassembler = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
         self.disassembler.detail = True
-
+        self.use_rip = use_rip
 
 _x86_ctx = X86TranslationContext()
 _x86_64_ctx = X86_64TranslationContext()
+_x86_64_rip_ctx = X86_64TranslationContext(use_rip=True)
 
 
-def translate(code_bytes, base_address, x86_64=False, threadsafe=True):
+def translate(code_bytes, base_address, x86_64=False, use_rip=False, threadsafe=True):
     done = False
 
     if x86_64:
         if threadsafe:
-            ctx = X86_64TranslationContext()
+            ctx = X86_64TranslationContext(use_rip)
         else:
-            ctx = _x86_64_ctx
+            if use_rip:
+                ctx = _x86_64_ctx
+            else:
+                ctx = _x86_64_rip_ctx
     else:
         if threadsafe:
             ctx = X86TranslationContext()

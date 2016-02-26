@@ -468,3 +468,19 @@ def x86_sub(ctx, i):
     _sub_set_flags(ctx, a, b, result)
 
     operand.set(ctx, i, 0, result)
+
+
+def x86_xadd(ctx, i):
+    a = operand.get(ctx, i, 0)
+    b = operand.get(ctx, i, 1)
+
+    b = _sign_extend(ctx, a, b)
+
+    result = ctx.tmp(a.size * 2)
+
+    ctx.emit(  add_  (a, b, result))
+
+    _add_set_flags(ctx, a, b, result)
+
+    operand.set(ctx, i, 0, result)
+    operand.set(ctx, i, 1, a)
