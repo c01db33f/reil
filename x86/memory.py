@@ -333,25 +333,23 @@ def x86_movs(ctx, i, size):
       # know that this is the SSE version, which x86_mov can handle.
       return x86_mov(ctx, i)
 
-    a = ctx.destination
-    b = ctx.source
-
-    address = ctx.destination
     value = ctx.tmp(size)
 
     if i.mnemonic.startswith('rep'):
         rep_prologue(ctx, i)
 
-    ctx.emit(  ldm_  (b, value))
-    ctx.emit(  stm_  (value, a))
+    ctx.emit(  ldm_  (ctx.source, value))
+    ctx.emit(  stm_  (value, ctx.destination))
     ctx.emit(  jcc_  (r('df', 8), 'decrement'))
     ctx.emit('increment')
-    ctx.emit(  add_  (address, imm(value.size // 8, ctx.word_size), address))
-    ctx.emit(  jcc_  (imm(1, 8), 'set'))
+    ctx.emit(  add_  (ctx.destination, imm(value.size // 8, ctx.word_size), ctx.destination))
+    ctx.emit(  add_  (ctx.source, imm(value.size // 8, ctx.word_size), ctx.source))
+    ctx.emit(  jcc_  (imm(1, 8), 'done'))
     ctx.emit('decrement')
-    ctx.emit(  sub_  (address, imm(value.size // 8, ctx.word_size), address))
-    ctx.emit('set')
-    ctx.emit(  str_  (address, ctx.destination))
+    ctx.emit(  sub_  (ctx.destination, imm(value.size // 8, ctx.word_size), ctx.destination))
+    ctx.emit(  sub_  (ctx.source, imm(value.size // 8, ctx.word_size), ctx.source))
+    ctx.emit('done')
+    ctx.emit(  nop_  ())
 
     if i.mnemonic.startswith('rep'):
         rep_epilogue(ctx, i)
