@@ -328,8 +328,10 @@ def x86_movs(ctx, i, size):
     # double-precision floating-point value' since capstone doesn't
     # distinguish. That instruction is just a mov into/from the SSE
     # registers.
-    if len(i.operands) >= 0:
-        return x86_mov(ctx, i)
+    if not operand.is_memory(ctx, i, 0) or not operand.is_memory(ctx, i, 1):
+      # so basically, if one of the operands is not a memory address, then we
+      # know that this is the SSE version, which x86_mov can handle.
+      return x86_mov(ctx, i)
 
     a = ctx.destination
     b = ctx.source
