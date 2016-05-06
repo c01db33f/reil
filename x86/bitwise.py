@@ -67,14 +67,16 @@ def _read_bit(ctx, i, base_index, offset_index):
         offset_sign = ctx.tmp(8)
         byte_offset = ctx.tmp(base.size)
         tmp0 = ctx.tmp(offset.size)
+        tmp1 = ctx.tmp(offset.size)
+        tmp2 = ctx.tmp(offset.size)
         byte = ctx.tmp(8)
         bitmask = ctx.tmp(8)
 
         ctx.emit(  and_  (offset, imm(sign_bit(offset.size), offset.size), tmp0))
         ctx.emit(  bisnz_(tmp0, offset_sign))
-        ctx.emit(  and_  (offset, imm(~sign_bit(offset.size), offset.size), offset))
-        ctx.emit(  div_  (offset, imm(8, offset.size), byte_offset))
-        ctx.emit(  mod_  (offset, imm(8, offset.size), offset))
+        ctx.emit(  and_  (offset, imm(~sign_bit(offset.size), offset.size), tmp1))
+        ctx.emit(  div_  (tmp1, imm(8, offset.size), byte_offset))
+        ctx.emit(  mod_  (tmp1, imm(8, offset.size), tmp2))
 
         ctx.emit(  jcc_  (offset_sign, 'negative_offset'))
         ctx.emit(  add_  (base, byte_offset, base))
@@ -85,7 +87,7 @@ def _read_bit(ctx, i, base_index, offset_index):
 
         ctx.emit('base_calculated')
         ctx.emit(  ldm_  (base, byte))
-        ctx.emit(  lshl_ (imm(1, 8), offset, bitmask))
+        ctx.emit(  lshl_ (imm(1, 8), tmp2, bitmask))
         ctx.emit(  and_  (byte, bitmask, byte))
         ctx.emit(  bisnz_(byte, bit))
 
